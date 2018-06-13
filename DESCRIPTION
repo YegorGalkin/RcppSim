@@ -8,11 +8,13 @@ Maintainer: Your Name <your@email.com>
 Description: One paragraph description of what the package does as one or more full sentences.
 License: GPL (>= 2)
 Imports:
-  Rcpp (>= 0.12.17),
-  BH
+  Rcpp (>= 0.12.15),
+  BH,
+  devtools
 LinkingTo:
   Rcpp,
-  BH
+  BH,
+  devtools
 RcppModules:
   poisson_1d_module
 SystemRequirements: C++11

@@ -1,8 +1,7 @@
 context("Testing spline building")
 
 test_that("Death spline is correctly built", {
-  require(Rcpp)
-  require(devtools)
+  
   params<-list("area_length_x"=1,    
                "cell_count_x"=100,  
                
@@ -92,8 +91,7 @@ test_that("Birth reverse cdf spline is correctly built", {
 
 
 test_that("Spline trimming works, try birth only",{
-  require(Rcpp)
-  require(devtools)
+
   params<-list("area_length_x"=1,    
                "cell_count_x"=100,  
                

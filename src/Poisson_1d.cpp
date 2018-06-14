@@ -494,6 +494,11 @@ RCPP_MODULE(poisson_1d_module){
     .field_readonly("cell_death_rates",&Grid_1d::cell_death_rates)
     .field_readonly("cell_population",&Grid_1d::cell_population)
     
+    .field_readonly("total_population",&Grid_1d::total_population)
+    .field_readonly("total_death_rate",&Grid_1d::total_death_rate)
+    .field_readonly("events",&Grid_1d::event_count)
+    .field_readonly("time",&Grid_1d::time)
+    
     .method("get_all_coordinates",&Grid_1d::get_all_coords)
     .method("get_all_death_rates",&Grid_1d::get_all_death_rates)
     

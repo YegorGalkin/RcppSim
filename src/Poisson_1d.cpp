@@ -381,7 +381,7 @@ struct Grid_1d
     
     
   }
-  Grid_1d(Rcpp::List params):cells(), cell_death_rates(), cell_population(),
+  Grid_1d(Rcpp::List params):time(),event_count(),cells(), cell_death_rates(), cell_population(),
     death_kernel_spline(),birth_kernel_spline(),birth_reverse_cdf_spline()
   {
     

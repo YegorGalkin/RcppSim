@@ -323,7 +323,22 @@ struct Grid_1d
     }
     
   }
-  
+  void run_events(int events){
+    if (events>0){
+      for (int i = 0; i<events;i++){
+        make_event();
+      }
+    }
+  }
+    
+  void run_for(double time){
+    if (time>0.0){
+      double time0=this->time;
+      while (this->time<time0+time){
+        make_event();
+      }
+    }
+  }
   
   
   double get_birth_spline_value(double at){
@@ -505,6 +520,8 @@ RCPP_MODULE(poisson_1d_module){
     .method("birth_reverse_cdf_spline_at",&Grid_1d::get_birth_reverse_cdf_spline_value)
     
     .method("make_event",&Grid_1d::make_event)
+    .method("run_events",&Grid_1d::run_events)
+    .method("run_for",&Grid_1d::run_for)
     
     .field_readonly("total_population",&Grid_1d::total_population)
     .field_readonly("total_death_rate",&Grid_1d::total_death_rate)

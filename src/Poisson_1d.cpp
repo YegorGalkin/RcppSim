@@ -193,6 +193,11 @@ struct Grid_1d
   void kill_random()
   {
     
+    if (total_population==1){
+      total_population--;
+      return;
+    }
+    
     int cell_death_index = boost::random::discrete_distribution<>(cell_death_rates)(rng);
     int in_cell_death_index = boost::random::discrete_distribution<>(cells[cell_death_index].death_rates)(rng);
     
@@ -336,6 +341,7 @@ struct Grid_1d
       double time0=this->time;
       while (this->time<time0+time){
         make_event();
+        if(total_population==0) return;
       }
     }
   }

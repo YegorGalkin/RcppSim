@@ -475,8 +475,25 @@ struct Grid_1d
             1e-10, 0.0, birth_cutoff_r, numeric_limits<double>::digits);
     
     }
+    int i=0;
+    while (y_quantile_1d_array[i]<1e-300){
+      i++;
+    }
     
-    spline1dbuildmonotone(x_quantile_1d_array, y_quantile_1d_array, birth_reverse_cdf_spline);
+    event_count=i-1000;
+    real_1d_array x_quantile_1d_array_temp;
+    real_1d_array y_quantile_1d_array_temp;
+    
+    x_quantile_1d_array_temp.setlength(birth_spline_nodes-i);
+    y_quantile_1d_array_temp.setlength(birth_spline_nodes-i);
+    
+    for (int j = 0; j < birth_spline_nodes-i; j++) {
+      x_quantile_1d_array_temp[j]=x_quantile_1d_array[i+j];
+      y_quantile_1d_array_temp[j]=y_quantile_1d_array[i+j];
+    }
+    
+    spline1dbuildmonotone(x_quantile_1d_array_temp, y_quantile_1d_array_temp, birth_reverse_cdf_spline);
+    spline1dlintransx(birth_reverse_cdf_spline,1-x_quantile_1d_array_temp[0],x_quantile_1d_array_temp[0]);
     
     //Spawn speciments and calculate death rates
     Initialize_death_rates();

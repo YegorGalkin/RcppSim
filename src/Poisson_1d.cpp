@@ -459,7 +459,7 @@ struct Grid_1d
 
     double temp_h = abs(x_quantile_1d_array_temp[1]-x_quantile_1d_array_temp[0]);
 
-    birth_reverse_cdf_spline = cubic_b_spline<double>(y_quantile_1d_array_temp.begin(), y_quantile_1d_array_temp.end(), 0, death_step, 1, 100);
+    birth_reverse_cdf_spline = cubic_b_spline<double>(y_quantile_1d_array_temp.begin(), y_quantile_1d_array_temp.end(), 0, temp_h, 1, 10);
 
     //Spawn speciments and calculate death rates
     Initialize_death_rates();

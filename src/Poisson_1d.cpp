@@ -24,10 +24,8 @@
 #include <boost/math/interpolators/cubic_b_spline.hpp>
 #include <boost/math/quadrature/trapezoidal.hpp>
 
-#include "interpolation.h"
 
 using namespace std;
-using namespace alglib;
 
 #ifndef POISSON_1D_H
 #define POISSON_1D_H
@@ -63,10 +61,7 @@ struct Grid_1d
   double time;
   int event_count;
 
-  std::vector<double> death_kernel_x;
   std::vector<double> death_kernel_y;
-
-  std::vector<double> birth_kernel_x;
   std::vector<double> birth_kernel_y;
 
   double spline_precision;
@@ -74,13 +69,16 @@ struct Grid_1d
   double death_cutoff_r;
   double birth_cutoff_r;
 
+  double death_step;
+  double birth_step;
+
   int death_spline_nodes;
   int birth_spline_nodes;
 
-  spline1dinterpolant death_kernel_spline;
-  spline1dinterpolant birth_kernel_spline;
+  boost::math::cubic_b_spline<double> death_kernel_spline;
+  boost::math::cubic_b_spline<double> birth_kernel_spline;
 
-  spline1dinterpolant birth_reverse_cdf_spline;
+  boost::math::cubic_b_spline<double> birth_reverse_cdf_spline;
 
   int cull_x;
 
@@ -186,7 +184,7 @@ struct Grid_1d
             if (distance > death_cutoff_r)
               continue; //Too far to interact
 
-            double interaction = dd * spline1dcalc(death_kernel_spline, distance);
+            double interaction = dd * death_kernel_spline(distance);
 
             cell_at(i).death_rates[k] += interaction;
             cell_death_rate_at(i) += interaction;
@@ -227,7 +225,7 @@ struct Grid_1d
         if (distance > death_cutoff_r)
           continue; //Too far to interact
 
-        double interaction = dd * spline1dcalc(death_kernel_spline, distance);
+        double interaction = dd * death_kernel_spline(distance);
 
         cell_at(i).death_rates[k] -= interaction;
         //ignore dying speciment death rates since it is to be deleted
@@ -267,7 +265,7 @@ struct Grid_1d
     Cell_1d &parent_cell = cells[cell_index];
 
     double x_coord_new = parent_cell.coords_x[event_index] +
-                         spline1dcalc(birth_reverse_cdf_spline, boost::random::uniform_01<>()(rng)) * (boost::random::bernoulli_distribution<>(0.5)(rng) * 2 - 1);
+                         birth_reverse_cdf_spline(boost::random::uniform_01<>()(rng)) * (boost::random::bernoulli_distribution<>(0.5)(rng) * 2 - 1);
 
     if (x_coord_new < 0 || x_coord_new > area_length_x)
     {
@@ -306,7 +304,7 @@ struct Grid_1d
           if (distance > death_cutoff_r)
             continue; //Too far to interact
 
-          double interaction = dd * spline1dcalc(death_kernel_spline, distance);
+          double interaction = dd * death_kernel_spline(distance);
 
           cell_at(i).death_rates[k] += interaction;
           cell_at(new_i).death_rates[cell_population_at(new_i) - 1] += interaction;
@@ -363,64 +361,20 @@ struct Grid_1d
 
   double get_birth_spline_value(double at)
   {
-    return spline1dcalc(birth_kernel_spline, at);
+    return birth_kernel_spline(at);
   }
 
   double get_death_spline_value(double at)
   {
-    return spline1dcalc(death_kernel_spline, at);
+    return death_kernel_spline(at);
   }
 
   double get_birth_reverse_cdf_spline_value(double at)
   {
-    return spline1dcalc(birth_reverse_cdf_spline, at);
+    return birth_reverse_cdf_spline(at);
   }
 
-  void build_spline(const vector<double> &kernel_x, const vector<double> &kernel_y, spline1dinterpolant &spline)
-  {
-
-    real_1d_array x_1d_array;
-    real_1d_array y_1d_array;
-
-    int spline_nodes = kernel_x.size();
-
-    x_1d_array.setlength(spline_nodes);
-    y_1d_array.setlength(spline_nodes);
-
-    for (int i = 0; i < spline_nodes; i++)
-    {
-      x_1d_array[i] = kernel_x[i];
-      y_1d_array[i] = kernel_y[i];
-    }
-
-    spline1dbuildmonotone(x_1d_array, y_1d_array, spline);
-  }
-
-  void trim_spline(vector<double> &kernel_x, vector<double> &kernel_y, spline1dinterpolant &spline,
-                   int &spline_nodes, double &cutoff_r, double precision)
-  {
-
-    double C = spline1dintegrate(spline, cutoff_r); //Integration constant
-
-    double C_trim = (1 - precision) * C;
-
-    int node_max_index = 0;
-
-    while (spline1dintegrate(spline, kernel_x[node_max_index]) < C_trim)
-      node_max_index++;
-
-    if (node_max_index != spline_nodes - 1)
-    {
-
-      kernel_x.erase(kernel_x.begin() + node_max_index + 1, kernel_x.end());
-      kernel_y.erase(kernel_y.begin() + node_max_index + 1, kernel_y.end());
-
-      spline_nodes = node_max_index + 1;
-      cutoff_r = kernel_x[node_max_index];
-
-      build_spline(kernel_x, kernel_y, spline);
-    }
-  }
+  
   Grid_1d(Rcpp::List params) : time(), event_count(), cells(), cell_death_rates(), cell_population(),
                                death_kernel_spline(), birth_kernel_spline(), birth_reverse_cdf_spline()
   {
@@ -444,42 +398,37 @@ struct Grid_1d
 
     initial_density = Rcpp::as<double>(params["init_density"]);
 
-    death_kernel_x = Rcpp::as<vector<double>>(params["death_kernel_x"]);
     death_kernel_y = Rcpp::as<vector<double>>(params["death_kernel_y"]);
+    death_cutoff_r = Rcpp::as<double>(params["death_kernel_r"]);
+    death_spline_nodes = death_kernel_y.size();
+    death_step = death_cutoff_r/(death_spline_nodes-1);
 
-    death_cutoff_r = death_kernel_x.back();
-    death_spline_nodes = death_kernel_x.size();
-
-    birth_kernel_x = Rcpp::as<vector<double>>(params["birth_kernel_x"]);
     birth_kernel_y = Rcpp::as<vector<double>>(params["birth_kernel_y"]);
-
-    birth_cutoff_r = birth_kernel_x.back();
-    birth_spline_nodes = birth_kernel_x.size();
+    birth_cutoff_r = Rcpp::as<double>(params["birth_kernel_r"]);
+    birth_spline_nodes = birth_kernel_y.size();
+    birth_step = birth_cutoff_r/(birth_spline_nodes-1);
 
     spline_precision = Rcpp::as<double>(params["spline_precision"]);
 
-    //Build death spline
-
-    build_spline(death_kernel_x, death_kernel_y, death_kernel_spline);
-    trim_spline(death_kernel_x, death_kernel_y, death_kernel_spline, death_spline_nodes, death_cutoff_r, spline_precision);
+    using boost::math::cubic_b_spline;
+    //Build death spline, ensure 0 derivative at 0 (symmetric) and endpoint (expected no death interaction further)
+    death_kernel_spline=cubic_b_spline<double>(death_kernel_y.begin(), death_kernel_y.end(), 0, death_step, 0, 0);
+    //trim_spline(death_kernel_x, death_kernel_y, death_kernel_spline, death_spline_nodes, death_cutoff_r, spline_precision);
 
     //Calculate amount of cells to check around for death interaction
 
     cull_x = max(static_cast<int>(ceil(death_cutoff_r / (area_length_x / cell_count_x))), 3);
 
     //Build birth spline
-
-    build_spline(birth_kernel_x, birth_kernel_y, birth_kernel_spline);
-    trim_spline(birth_kernel_x, birth_kernel_y, birth_kernel_spline, birth_spline_nodes, birth_cutoff_r, spline_precision);
+    birth_kernel_spline=cubic_b_spline<double>(birth_kernel_y.begin(), birth_kernel_y.end(), 0, birth_step, 0, 0);
+    //trim_spline(birth_kernel_x, birth_kernel_y, birth_kernel_spline, birth_spline_nodes, birth_cutoff_r, spline_precision);
     //Calculate reverse CDF for birth spline
 
-    real_1d_array x_quantile_1d_array;
-    real_1d_array y_quantile_1d_array;
+    vector<double> x_quantile_1d_array(birth_spline_nodes);
+    vector<double> y_quantile_1d_array(birth_spline_nodes);
 
-    x_quantile_1d_array.setlength(birth_spline_nodes);
-    y_quantile_1d_array.setlength(birth_spline_nodes);
-
-    double approx_const = spline1dintegrate(birth_kernel_spline, birth_cutoff_r);
+    using boost::math::quadrature::trapezoidal;
+    double approx_const = trapezoidal([=](double y) {return birth_kernel_spline(y);}, 0.0, birth_cutoff_r);
 
     using boost::math::tools::newton_raphson_iterate;
 
@@ -489,8 +438,8 @@ struct Grid_1d
       y_quantile_1d_array[i] =
           newton_raphson_iterate(
               [=](double y) { return make_tuple(
-                                  spline1dintegrate(birth_kernel_spline, y) / approx_const - x_quantile_1d_array[i],
-                                  spline1dcalc(birth_kernel_spline, y) / approx_const); },
+                                  trapezoidal([=](double z) {return birth_kernel_spline(z);}, 0.0, y) / approx_const - x_quantile_1d_array[i],
+                                  birth_kernel_spline(y) / approx_const); },
               1e-10, 0.0, birth_cutoff_r, numeric_limits<double>::digits);
     }
     int i = 0;
@@ -499,12 +448,8 @@ struct Grid_1d
       i++;
     }
 
-    event_count = i - 1000;
-    real_1d_array x_quantile_1d_array_temp;
-    real_1d_array y_quantile_1d_array_temp;
-
-    x_quantile_1d_array_temp.setlength(birth_spline_nodes - i);
-    y_quantile_1d_array_temp.setlength(birth_spline_nodes - i);
+    vector<double> x_quantile_1d_array_temp(birth_spline_nodes - i);
+    vector<double> y_quantile_1d_array_temp(birth_spline_nodes - i);
 
     for (int j = 0; j < birth_spline_nodes - i; j++)
     {
@@ -512,8 +457,9 @@ struct Grid_1d
       y_quantile_1d_array_temp[j] = y_quantile_1d_array[i + j];
     }
 
-    spline1dbuildmonotone(x_quantile_1d_array_temp, y_quantile_1d_array_temp, birth_reverse_cdf_spline);
-    spline1dlintransx(birth_reverse_cdf_spline, 1 - x_quantile_1d_array_temp[0], x_quantile_1d_array_temp[0]);
+    double temp_h = abs(x_quantile_1d_array_temp[1]-x_quantile_1d_array_temp[0]);
+
+    birth_reverse_cdf_spline = cubic_b_spline<double>(y_quantile_1d_array_temp.begin(), y_quantile_1d_array_temp.end(), 0, death_step, 1, 100);
 
     //Spawn speciments and calculate death rates
     Initialize_death_rates();
@@ -537,15 +483,15 @@ RCPP_MODULE(poisson_1d_module)
       .field_readonly("seed", &Grid_1d::seed)
       .field_readonly("initial_density", &Grid_1d::initial_density)
 
-      .field_readonly("death_kernel_x", &Grid_1d::death_kernel_x)
       .field_readonly("death_kernel_y", &Grid_1d::death_kernel_y)
       .field_readonly("death_cutoff_r", &Grid_1d::death_cutoff_r)
       .field_readonly("death_spline_nodes", &Grid_1d::death_spline_nodes)
+      .field_readonly("death_step", &Grid_1d::death_step)
 
-      .field_readonly("birth_kernel_x", &Grid_1d::birth_kernel_x)
       .field_readonly("birth_kernel_y", &Grid_1d::birth_kernel_y)
       .field_readonly("birth_cutoff_r", &Grid_1d::birth_cutoff_r)
       .field_readonly("birth_spline_nodes", &Grid_1d::birth_spline_nodes)
+      .field_readonly("birth_step", &Grid_1d::birth_step)
 
       .field_readonly("spline_precision", &Grid_1d::spline_precision)
 

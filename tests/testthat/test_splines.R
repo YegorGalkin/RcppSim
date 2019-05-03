@@ -12,10 +12,10 @@ test_that("Death spline is correctly built", {
                "seed"=1234,  
                "init_density"=100,
                
-               "death_kernel_x"=(0:100)/20000,
+               "death_kernel_r"=1/200,
                "death_kernel_y"=dnorm((0:100)/20000,sd=0.001),
                
-               "birth_kernel_x"=(0:100)/10000,
+               "birth_kernel_r"=1/100,
                "birth_kernel_y"=dnorm((0:100)/10000,sd=0.002), 
                
                "spline_precision" = 1e-9  #without spline trimming
@@ -51,10 +51,10 @@ test_that("Birth reverse cdf spline is correctly built", {
                "seed"=1234,  
                "init_density"=100,
                
-               "death_kernel_x"=(0:100)/20000,
+               "death_kernel_r"=1/200,
                "death_kernel_y"=dnorm((0:100)/20000,sd=0.001),
                
-               "birth_kernel_x"=(0:100)/10000,
+               "birth_kernel_r"=1/100,
                "birth_kernel_y"=dnorm((0:100)/10000,sd=0.002), 
                
                "spline_precision" = 1e-9 #without spline trimming
@@ -69,7 +69,7 @@ test_that("Birth reverse cdf spline is correctly built", {
   total_diff=0
   st=birth_kernel_x_quantile_test[2]
   
-  for(i in 1:1000)
+  for(i in 1:999)
   {
     total_diff=total_diff+abs(birth_kernel_y_quantile_test[[i]]-
                               sim$birth_reverse_cdf_spline_at(birth_kernel_x_quantile_test[[i]])
@@ -84,7 +84,7 @@ test_that("Birth reverse cdf spline is correctly built", {
     suppressWarnings(ks.test(simulated_results,"pnorm",0,0.002)$p.value)
   })
 
-  expect_true(mean(p.values)>0.1) #High p-values all around
+  expect_true(mean(p.values)>0.4) #High p-values all around
   
   expect_silent(for(i in 1:100000) sim$make_event())
 })
@@ -102,10 +102,10 @@ test_that("Spline trimming works, try birth only",{
                "seed"=1234,  
                "init_density"=100,
                
-               "death_kernel_x"=(0:1000)/20000,
+               "death_kernel_r"=1/20,
                "death_kernel_y"=dnorm((0:1000)/20000,sd=0.001),
                
-               "birth_kernel_x"=(0:1000)/10000,
+               "birth_kernel_r"=1/10,
                "birth_kernel_y"=dnorm((0:1000)/10000,sd=0.002), 
                
                "spline_precision" = 1e-9  
@@ -120,7 +120,7 @@ test_that("Spline trimming works, try birth only",{
   total_diff=0
   st=birth_kernel_x_quantile_test[2]
   
-  for(i in 1:1000)
+  for(i in 1:999)
   {
     total_diff=total_diff+abs(birth_kernel_y_quantile_test[[i]]-
                                 sim$birth_reverse_cdf_spline_at(birth_kernel_x_quantile_test[[i]])

@@ -71,9 +71,11 @@ struct Grid_1d
 
   double death_step;
   double birth_step;
+  double birth_reverse_cdf_step;
 
   int death_spline_nodes;
   int birth_spline_nodes;
+  int birth_reverse_cdf_nodes;
 
   boost::math::cubic_b_spline<double> death_kernel_spline;
   boost::math::cubic_b_spline<double> birth_kernel_spline;
@@ -448,18 +450,23 @@ struct Grid_1d
       i++;
     }
 
-    vector<double> x_quantile_1d_array_temp(birth_spline_nodes - i);
     vector<double> y_quantile_1d_array_temp(birth_spline_nodes - i);
 
     for (int j = 0; j < birth_spline_nodes - i; j++)
     {
-      x_quantile_1d_array_temp[j] = x_quantile_1d_array[i + j];
       y_quantile_1d_array_temp[j] = y_quantile_1d_array[i + j];
     }
-
-    double temp_h = abs(x_quantile_1d_array_temp[1]-x_quantile_1d_array_temp[0]);
-
-    birth_reverse_cdf_spline = cubic_b_spline<double>(y_quantile_1d_array_temp.begin(), y_quantile_1d_array_temp.end(), 0, temp_h, 1, 10);
+    
+    birth_reverse_cdf_step = 1.0/(y_quantile_1d_array_temp.size()-1);
+    birth_reverse_cdf_nodes = y_quantile_1d_array_temp.size();
+    // Extrapolate last quantile element
+    double right_derivative = (y_quantile_1d_array_temp[y_quantile_1d_array_temp.size()-2] - y_quantile_1d_array_temp[y_quantile_1d_array_temp.size()-3])/birth_reverse_cdf_step;
+    
+    y_quantile_1d_array_temp[y_quantile_1d_array_temp.size()-1] = y_quantile_1d_array_temp[y_quantile_1d_array_temp.size()-2] + right_derivative * birth_reverse_cdf_step;
+      
+    //Ensure correct derivative at 0, equal to 1/2*birth_kernel(0)
+    birth_reverse_cdf_spline = cubic_b_spline<double>(y_quantile_1d_array_temp.begin(), y_quantile_1d_array_temp.end(), 0, birth_reverse_cdf_step, 
+                                                      0.5/birth_kernel_spline(0), 2*right_derivative);
 
     //Spawn speciments and calculate death rates
     Initialize_death_rates();
@@ -492,6 +499,9 @@ RCPP_MODULE(poisson_1d_module)
       .field_readonly("birth_cutoff_r", &Grid_1d::birth_cutoff_r)
       .field_readonly("birth_spline_nodes", &Grid_1d::birth_spline_nodes)
       .field_readonly("birth_step", &Grid_1d::birth_step)
+
+      .field_readonly("birth_reverse_cdf_nodes", &Grid_1d::birth_reverse_cdf_nodes)
+      .field_readonly("birth_reverse_cdf_step", &Grid_1d::birth_reverse_cdf_step)
 
       .field_readonly("spline_precision", &Grid_1d::spline_precision)
 

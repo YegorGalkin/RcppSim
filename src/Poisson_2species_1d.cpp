@@ -340,7 +340,6 @@ struct Grid_multy_1d
       }
       //cout << "new_i: " << new_i << endl;
       //New speciment is added to the end of vector
-      cout << "Size: " << cell_at(new_i).coords_x.size() << endl;
       cell_at(new_i).coords_x.push_back(x_coord_new);
       cell_at(new_i).death_rates.push_back(d[s]);
       cell_at(new_i).spicies.push_back(s);

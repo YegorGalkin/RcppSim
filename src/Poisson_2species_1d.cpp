@@ -14,6 +14,9 @@
 #include <math.h>
 #include <tuple>
 #include <iomanip>
+#include <cassert>
+#include <cmath>
+#include <cstdlib>
 
 #include <boost/random.hpp>
 #include <boost/random/lagged_fibonacci.hpp>
@@ -25,6 +28,11 @@
 #include <boost/math/interpolators/cubic_b_spline.hpp>
 #include <boost/math/quadrature/trapezoidal.hpp>
 
+void ass(bool a, const std::string& msg = {}) {
+  if (!a) {
+    throw msg;
+  }
+}
 
 using namespace std;
 
@@ -125,6 +133,14 @@ struct Grid_multy_1d
     return res;
   }
   
+  void chek() {
+    for (auto x : total_death_rate) {
+      if (isnan(x)) {
+        abort();
+      }
+    }
+  }
+  
   int get_all_population() {
     int res = 0;
     for (int i = 0; i < SPICIES_COUNT; ++i) {
@@ -167,7 +183,9 @@ struct Grid_multy_1d
   
   void Initialize_death_rates()
   {
-    
+    for (auto &x : total_death_rate) {
+      x = 0;
+    }
     for (int i = 0; i < cell_count_x; i++)
     {
       cells.push_back(Cell_multi_1d());
@@ -197,10 +215,13 @@ struct Grid_multy_1d
         
         cell_at(i).death_rates.push_back(d[s]);
         cell_at(i).spicies.push_back(s);
+        
         cell_death_rate_at(s, i) += d[s];
         total_death_rate[s] += d[s];
+        chek();
         
-        cell_population_at(s, i)++;
+        
+        ++cell_population_at(s, i);
       }
     }
     
@@ -226,6 +247,9 @@ struct Grid_multy_1d
               continue; //Too far to interact
             
             double interaction = dd[type1][type2] * death_kernel_spline[type1][type2](distance);
+            if (isnan(interaction)) {
+              abort();
+            }
             
             cell_at(i).death_rates[k] += interaction;
             cell_death_rate_at(type1, i) += interaction;
@@ -234,6 +258,7 @@ struct Grid_multy_1d
         }
       }
     }
+    chek();
   }
   
   void kill_random(int s)
@@ -242,15 +267,30 @@ struct Grid_multy_1d
       return;
     }
     int cell_death_index = boost::random::discrete_distribution<>(cell_death_rates[s])(rng);
-    auto tmp_vec = cells[cell_death_index].death_rates;
-    for (int i = 0; i < tmp_vec.size(); ++i) {
-      if (cell_at(cell_death_index).spicies[i] != s) {
-        tmp_vec[i] = 0;
+    if (cell_population_at(s, cell_death_index) == 0) {
+      return;
+    }
+    auto &death_cell = cells[cell_death_index];
+    
+    vector<double> tmp_vec;
+    vector<size_t> translate;
+    tmp_vec.reserve(death_cell.death_rates.size());
+    translate.reserve(death_cell.death_rates.size());
+    for (size_t i = 0; i < death_cell.death_rates.size(); ++i) {
+      if (death_cell.spicies[i] == s) {
+        tmp_vec.push_back(death_cell.death_rates[i]);
+        translate.push_back(i);
       }
     }
+    if (tmp_vec.size() == 0) {
+      abort();
+    }
     int in_cell_death_index = boost::random::discrete_distribution<>(tmp_vec)(rng);
-    
-    Cell_multi_1d &death_cell = cells[cell_death_index];
+    in_cell_death_index = translate[in_cell_death_index];
+    if(death_cell.spicies[in_cell_death_index] != s) {
+      cout << "Not that species" << endl;
+      abort();
+    }
     
     last_event = make_tuple<>(death_cell.coords_x[in_cell_death_index], -1);
     
@@ -270,6 +310,9 @@ struct Grid_multy_1d
           continue; //Too far to interact
         
         double interaction = dd[s][type2] * death_kernel_spline[s][type2](distance);
+        if (isnan(interaction)) {
+          abort();
+        }
         
         cell_at(i).death_rates[k] -= interaction;
         //ignore dying speciment death rates since it is to be deleted
@@ -285,20 +328,22 @@ struct Grid_multy_1d
     cell_death_rates[s][cell_death_index] -= d[s];
     total_death_rate[s] -= d[s];
     
-    if (abs(cell_death_rates[s][cell_death_index]) < 1e-10)
+    if (cell_death_rates[s][cell_death_index] < 1e-10)
     {
       cell_death_rates[s][cell_death_index] = 0;
     }
-    
+    ass(cell_population[s][cell_death_index] > 0);
     cell_population[s][cell_death_index]--;
     total_population[s]--;
     
     //swap dead and last
-    death_cell.death_rates[in_cell_death_index] = death_cell.death_rates[death_cell.death_rates.size() - 1];
-    death_cell.coords_x[in_cell_death_index] = death_cell.coords_x[death_cell.coords_x.size() - 1];
+    death_cell.death_rates[in_cell_death_index] = death_cell.death_rates.back();
+    death_cell.coords_x[in_cell_death_index] = death_cell.coords_x.back();
+    death_cell.spicies[in_cell_death_index] = death_cell.spicies.back();
     
-    death_cell.death_rates.erase(death_cell.death_rates.end() - 1);
-    death_cell.coords_x.erase(death_cell.coords_x.end() - 1);
+    death_cell.death_rates.pop_back();
+    death_cell.coords_x.pop_back();
+    death_cell.spicies.pop_back();
   }
   
   void spawn_random(int s)
@@ -317,7 +362,7 @@ struct Grid_multy_1d
       }
     }
     
-    Cell_multi_1d &parent_cell = cells[cell_index];
+    auto &parent_cell = cells[cell_index];
     
     double x_coord_new = parent_cell.coords_x[event_index] +
       birth_reverse_cdf_spline[s](boost::random::uniform_01<>()(rng)) * (boost::random::bernoulli_distribution<>(0.5)(rng) * 2 - 1);
@@ -338,7 +383,6 @@ struct Grid_multy_1d
       if (new_i < 0) {
         new_i = 0;
       }
-      //cout << "new_i: " << new_i << endl;
       //New speciment is added to the end of vector
       cell_at(new_i).coords_x.push_back(x_coord_new);
       cell_at(new_i).death_rates.push_back(d[s]);
@@ -365,9 +409,9 @@ struct Grid_multy_1d
           double interaction = dd[s][type2] * death_kernel_spline[s][type2](distance);
           
           cell_at(i).death_rates[k] += interaction;
-          cell_at(new_i).death_rates[cell_population_all_at(new_i) - 1] += interaction;
+          cell_at(new_i).death_rates.back() += interaction;
           
-          cell_death_rate_at(s, i) += interaction;
+          cell_death_rate_at(type2, i) += interaction;
           cell_death_rate_at(s, new_i) += interaction;
           
           total_death_rate[s] += interaction;
@@ -386,10 +430,10 @@ struct Grid_multy_1d
     //Rolling event according to global birth \ death rate
     std::vector<double> dis;
     dis.resize(4);
-    dis[0] = 1 - total_population[0] * b[0] / (total_population[0] * b[0] + total_death_rate[0]);
-    dis[1] = 1 - dis[0];
-    dis[2] = 1 - total_population[1] * b[1] / (total_population[1] * b[1] + total_death_rate[1]);
-    dis[3] = 1 - dis[2];
+    dis[0] = total_death_rate[0];
+    dis[1] = total_population[0]*b[0];
+    dis[2] = total_death_rate[1];
+    dis[3] = total_population[1]*b[1];
     if (total_population[0] == 0) {
       dis[0] = 0;
       dis[1] = 0;
@@ -418,6 +462,7 @@ struct Grid_multy_1d
       default:
         throw "Unknown result";
     }
+    chek();
   }
   void run_events(int events)
   {

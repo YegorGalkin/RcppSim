@@ -1,0 +1,393 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+```{r}
+get_seed <- function() {
+  return(floor(runif(1, min=0, max=2^32-1)))
+}
+```
+
+```{r}
+run_sim <- function(params) {
+  params["seed"] = get_seed()
+  sim = new(poisson_2spicies_1d, params)
+  COUNT = 50000
+  pop = matrix(nrow = 2, ncol = COUNT)
+  for (k in 1:COUNT){
+    sim$make_event()
+    pop[,k] = sim$total_population / area_length
+  }
+  return(
+    c(
+      mean(pop[1,COUNT - 7000:COUNT]),
+      mean(pop[2,COUNT - 7000:COUNT])
+    )
+  )
+}
+```
+
+
+```{r}
+require(MathBioSim)
+ 
+area_length = 2
+cell_count_x = 100
+x_grid_points = 1000
+ 
+b = c(0.4, 0.4)
+d = c(0.2, 0.2)
+dd = matrix(
+  c(0.001, 0.001, 0.001, 0.001),
+  nrow = 2,
+  ncol = 2
+)
+ 
+time_start<-Sys.time()
+ 
+SM = c(0.04, 0.04)
+SW = matrix(
+  c(0.04, 0.04, 0.04, 0.04),
+  ncol = 2,
+  nrow = 2
+)
+x_length = max(SW) * 3
+x_grid = (0:500) / 500 * x_length
+ 
+m1=dnorm(x_grid, sd = SM[1])
+m2=dnorm(x_grid, sd = SM[2])
+ 
+w11=dnorm(x_grid, sd = SW[1, 1])
+w12=dnorm(x_grid, sd = SW[1, 2])
+w21=dnorm(x_grid, sd = SW[2, 1])
+w22=dnorm(x_grid, sd = SW[2, 2])
+ 
+d12 = (0:30) / 30 * 0.001
+sm2 = (0:30) / 30 * 0.2
+ 
+N1 = matrix(
+  nrow = length(d12),
+  ncol = length(sm2)
+)
+ 
+N2 = matrix(
+  nrow = length(d12),
+  ncol = length(sm2)
+)
+ 
+for (i in 2:length(d12)) {
+  for (j in 2:length(sm2)) {
+    w12 = dnorm(x_grid, sd = SW[1, 2]) * d12[i]
+    m2 = dnorm(x_grid, sd=sm2[j]) * b[2]
+    cat(i, j, "\n")
+   
+    params<-list(
+      "area_length_x"=area_length,
+      "cell_count_x"=cell_count_x,
+      "seed"=42,
+     
+      "b1"=b[1],
+      "b2"=b[2],
+      "d1"=d[1],
+      "d2"=d[2],
+      "dd11"=dd[1, 1],
+      "dd12"=dd[1, 2],
+      "dd21"=dd[2, 1],
+      "dd22"=dd[2, 2],
+     
+      "init_density1"=12,
+      "init_density2"=12,
+     
+      "death_kernel_y11"=w11,
+      "death_kernel_y12"=w12,
+      "death_kernel_y21"=w21,
+      "death_kernel_y22"=w22,
+     
+      "birth_kernel_y1"=m1,
+      "birth_kernel_y2"=m2,
+     
+      "death_kernel_r"=x_length,
+      "birth_kernel_r"=x_length,
+     
+      "spline_precision"=1e-6
+    )
+    sim = new(poisson_2spicies_1d, params)
+    COUNT = 50000
+    pop = matrix(nrow = 2, ncol = COUNT)
+    for (k in 1:COUNT){
+      sim$make_event()
+      pop[,k] = sim$total_population / area_length
+      #print(sim$cell_population)
+      #print(k)
+    }
+    
+    N1[i, j] = mean(pop[1,COUNT - 7000:COUNT])
+    N2[i, j] = mean(pop[2,COUNT - 7000:COUNT])
+    #print(N1[i, j])
+  }
+}
+```
+```{r}
+plot(N1[5,])
+```
+
+```{r}
+require(MathBioSim)
+
+get_seed <- function() {
+  return(floor(runif(1, min=0, max=2^32-1)))
+}
+
+run_sim <- function(x, params, area_length) {
+  require(MathBioSim)
+  params["seed"] = floor(runif(1, min=0, max=2^32-1))
+  sim = new(poisson_2spicies_1d, params)
+  COUNT = 1000000
+  pop = matrix(nrow = 2, ncol = COUNT)
+  for (k in 1:COUNT){
+    sim$make_event()
+    pop[,k] = sim$total_population / area_length
+  }
+  return(
+    c(
+      mean(pop[1,COUNT]),
+      mean(pop[2,COUNT])
+    )
+  )
+}
+
+
+library(parallel)
+no_cores <- detectCores() - 1
+cl <- makeCluster(no_cores)
+
+
+area_length = 90
+cell_count_x = 50
+x_grid_points = 1000
+ 
+b = c(0.4, 0.4)
+d = c(0.2, 0.2)
+dd = matrix(
+  c(0.001, 0.001, 0.001, 0.001),
+  nrow = 2,
+  ncol = 2
+)
+ 
+time_start<-Sys.time()
+ 
+SM = c(0.04, 0.04)
+SW = matrix(
+  c(0.04, 0.04, 0.04, 0.04),
+  ncol = 2,
+  nrow = 2
+)
+x_length = max(SW) * 5
+x_grid = (0:x_grid_points) / x_grid_points * x_length
+ 
+m1=dnorm(x_grid, sd = SM[1])
+m2=dnorm(x_grid, sd = SM[2])
+ 
+w11=dnorm(x_grid, sd = SW[1, 1])
+w12=dnorm(x_grid, sd = SW[1, 2])
+w21=dnorm(x_grid, sd = SW[2, 1])
+w22=dnorm(x_grid, sd = SW[2, 2])
+
+linespec = function(from, to, count) {
+  return((0:(count - 1)) / count * (to - from) + from)
+}
+
+d12 = linespec(0.000001, 0.001, 10)
+sm2 = linespec(0.000001, 0.2, 10)
+ 
+N1 = matrix(
+  nrow = length(d12),
+  ncol = length(sm2)
+)
+ 
+N2 = matrix(
+  nrow = length(d12),
+  ncol = length(sm2)
+)
+
+
+
+for (i in 1:length(d12)) {
+  for (j in 1:length(sm2)) {
+    w12 = dnorm(x_grid, sd = SW[1, 2]) * d12[i]
+    m2 = dnorm(x_grid, sd=sm2[j]) * b[2]
+    cat(i, j, "\n")
+   
+    params<-list(
+      "area_length_x"=area_length,
+      "cell_count_x"=cell_count_x,
+      "seed"=42,
+     
+      "b1"=b[1],
+      "b2"=b[2],
+      "d1"=d[1],
+      "d2"=d[2],
+      "dd11"=dd[1, 1],
+      "dd12"=dd[1, 2],
+      "dd21"=dd[2, 1],
+      "dd22"=dd[2, 2],
+     
+      "init_density1"=6,
+      "init_density2"=6,
+     
+      "death_kernel_y11"=w11,
+      "death_kernel_y12"=w12,
+      "death_kernel_y21"=w21,
+      "death_kernel_y22"=w22,
+     
+      "birth_kernel_y1"=m1,
+      "birth_kernel_y2"=m2,
+     
+      "death_kernel_r"=x_length,
+      "birth_kernel_r"=x_length,
+     
+      "spline_precision"=1e-6
+    )
+    a = parSapply(cl, 1:16, run_sim, params = params, area_length = area_length)
+    
+    N1[i, j] = mean(a[1,])
+    N2[i, j] = mean(a[2,])
+    #print(N1[i, j])
+  }
+}
+write.csv(N1, "N1.data")
+write.csv(N2, "N2.data")
+write.csv(d12, "data.x")
+write.csv(sm2, "data.y")
+```
+
+```{r}
+require(MathBioSim)
+
+get_seed <- function() {
+  return(floor(runif(1, min=0, max=2^32-1)))
+}
+
+run_sim <- function(x, params, area_length) {
+  require(MathBioSim)
+  params["seed"] = floor(runif(1, min=0, max=2^32-1))
+  sim = new(poisson_2spicies_1d, params)
+  COUNT = 50000
+  pop = matrix(nrow = 2, ncol = COUNT)
+  for (k in 1:COUNT){
+    sim$make_event()
+    pop[,k] = sim$total_population / area_length
+  }
+  return(
+    c(
+      mean(pop[1,COUNT - 7000:COUNT]),
+      mean(pop[2,COUNT - 7000:COUNT])
+    )
+  )
+}
+
+
+area_length = 2
+cell_count_x = 100
+x_grid_points = 1000
+ 
+b = c(0.4, 0.4)
+d = c(0.2, 0.2)
+dd = matrix(
+  c(0.001, 0.001, 0.001, 0.001),
+  nrow = 2,
+  ncol = 2
+)
+ 
+time_start<-Sys.time()
+ 
+SM = c(0.04, 0.04)
+SW = matrix(
+  c(0.04, 0.04, 0.04, 0.04),
+  ncol = 2,
+  nrow = 2
+)
+x_length = max(SW) * 5
+x_grid = (0:x_grid_points) / x_grid_points * x_length
+ 
+m1=dnorm(x_grid, sd = SM[1])
+m2=dnorm(x_grid, sd = SM[2])
+ 
+w11=dnorm(x_grid, sd = SW[1, 1])
+w12=dnorm(x_grid, sd = SW[1, 2])
+w21=dnorm(x_grid, sd = SW[2, 1])
+w22=dnorm(x_grid, sd = SW[2, 2])
+
+linespec = function(from, to, count) {
+  return((0:(count - 1)) / count * (to - from) + from)
+}
+
+COUNTS = 1000;
+
+counts = c();
+N1 = c();
+N2 = c();
+Y1 = c();
+Y2 = c();
+
+for (i in 1:COUNTS) {
+    cat(i, "\n")
+   
+    params<-list(
+      "area_length_x"=area_length,
+      "cell_count_x"=cell_count_x,
+      "seed"=42,
+     
+      "b1"=b[1],
+      "b2"=b[2],
+      "d1"=d[1],
+      "d2"=d[2],
+      "dd11"=dd[1, 1],
+      "dd12"=dd[1, 2],
+      "dd21"=dd[2, 1],
+      "dd22"=dd[2, 2],
+     
+      "init_density1"=6,
+      "init_density2"=6,
+     
+      "death_kernel_y11"=w11,
+      "death_kernel_y12"=w12,
+      "death_kernel_y21"=w21,
+      "death_kernel_y22"=w22,
+     
+      "birth_kernel_y1"=m1,
+      "birth_kernel_y2"=m2,
+     
+      "death_kernel_r"=x_length,
+      "birth_kernel_r"=x_length,
+     
+      "spline_precision"=1e-6
+    )
+    a = run_sim(0, params = params, area_length = area_length);
+    N1[i] = a[1];
+    N2[i] = a[2];
+    counts[i] = i;
+    Y1[i] = mean(N1[1:i]);
+    Y2[i] = mean(N2[1:i]);
+      plot(counts[1:i], Y1[1:i], type = 'l', col = 'red');
+      lines(counts[1:i], Y2[1:i], type = 'l', col = 'blue');
+}
+```
+
+```{r}
+    plot(1:k, pop[1,1:k], type = 'l', col = 'red', ylim = c(0, 200), ylab = '', xlab = 'события');
+    lines(1:k, pop[2,1:k], type = 'l', col = 'blue');
+    abline(h=198.158, col = 'red')
+    abline(h=0.000197447, col = 'blue')
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.

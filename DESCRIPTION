@@ -1,7 +1,7 @@
 Package: MathBioSim
 Type: Package
 Title: What the Package Does in One 'Title Case' Line
-Version: 1.2.0
+Version: 1.2.1
 Date: 2018-05-22
 Author: Your Name
 Maintainer: Your Name <your@email.com>
@@ -17,6 +17,6 @@ LinkingTo:
   devtools
 RcppModules:
   poisson_1d_module,
-  poisson_2spicies_1d_module
+  poisson_1d_n_species_module
 SystemRequirements: C++11
 Suggests: testthat

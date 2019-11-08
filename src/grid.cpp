@@ -393,6 +393,7 @@ Grid::Grid(Rcpp::List params) {
   rng = boost::random::lagged_fibonacci2281(uint32_t(seed));
   
   cull_x = 6;
+  event_count = 0;
   
   cells = VEC<Cell>(cell_count_x);
   

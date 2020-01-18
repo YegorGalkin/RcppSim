@@ -2,26 +2,25 @@ library(pacman)
 p_load(tidyverse,spatstat,future,promises,listenv)
 library(MathBioSim)
 
-result_dir = 'D:/Rstuff/SimulationRuns/9_27_2019_pops/'
+result_dir = './9_27_2019_pops/'
 dir.create(result_dir, showWarnings = FALSE)
 dir.create(paste0(result_dir,"pop/"), showWarnings = FALSE)
 
 plan(multiprocess)
 
-params_file = read_csv("D:/Rstuff/params.csv")
-
 n_samples = 1000
 initial_population = 10000
 time_limit = 3600
 
-params_all=data.frame(id=params_file$id,
-                      sm=params_file$sm,
-                      sw=params_file$sw,
-                      b=1,d=0,dd=0.01,
-                      samples=n_samples,
-                      start_pop=initial_population,
-                      seed=1234, 
-                      area=pmax(params_file$sm, params_file$sw) * 100)
+params_all <-
+  data.frame(id=c(1,2,3),
+             sm=c(0.07,0.96,0.07),
+             sw=c(0.09,0.09,0.96),
+             b=1,d=0,dd=0.01,
+             samples=n_samples,
+             start_pop=initial_population,
+             ed=1234)%>%
+  mutate(area=pmax(sm, sw) * 1000)
 
 all_runs = listenv()
 

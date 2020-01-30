@@ -20,7 +20,7 @@ params_all <-
              b=1,d=0,dd=0.01,
              samples=n_samples,
              start_pop=initial_population,
-             ed=1234)%>%
+             seed=1234)%>%
   mutate(area=pmax(sm, sw) * 1000)
 
 all_runs = listenv()

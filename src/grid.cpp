@@ -333,7 +333,7 @@ void Grid::make_event() {
   if (get_all_population() == 0)
     return;
   
-  event_count++;
+  ++event_count;
   time += GetRandomTime();
   //Rolling event according to global birth \ death rate
   std::vector<double> dis(species_count * 2, 0);
@@ -392,7 +392,7 @@ Grid::Grid(Rcpp::List params) {
   seed = Rcpp::as<int>(params["seed"]);
   rng = boost::random::lagged_fibonacci2281(uint32_t(seed));
   
-  cull_x = 6;
+  cull_x = 3;
   event_count = 0;
   
   cells = VEC<Cell>(cell_count_x);

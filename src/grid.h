@@ -35,7 +35,7 @@ struct Grid {
   VEC<double> total_death_rate;
   
   double time;
-  int event_count;
+  size_t event_count;
   
   MAT<double> death_cutoff_r;
   

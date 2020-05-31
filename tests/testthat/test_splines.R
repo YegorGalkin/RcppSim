@@ -11,7 +11,7 @@ test_that("Death spline is correctly built", {
                "dd"=0.01, 
                
                "seed"=1234,  
-               "initial_population"=runif(100,min=0,max=1),
+               "initial_population_x"=runif(100,min=0,max=1),
                
                "death_kernel_r"=1/200,
                "death_kernel_y"=dnorm((0:100)/20000,sd=0.001),
@@ -51,7 +51,7 @@ test_that("Birth reverse cdf spline is correctly built", {
                "dd"=0.01, 
                
                "seed"=1234,  
-               "initial_population"=runif(100,min=0,max=1),
+               "initial_population_x"=runif(100,min=0,max=1),
                
                "death_kernel_r"=1/200,
                "death_kernel_y"=dnorm((0:100)/20000,sd=0.001),
@@ -103,7 +103,7 @@ test_that("Spline trimming works, try birth only",{
                "dd"=0.01, 
                
                "seed"=1234,  
-               "initial_population"=runif(100,min=0,max=1),
+               "initial_population_x"=runif(100,min=0,max=1),
                
                "death_kernel_r"=1/20,
                "death_kernel_y"=dnorm((0:1000)/20000,sd=0.001),

@@ -50,7 +50,7 @@ struct Grid_1d {
   int seed;
   boost::random::lagged_fibonacci2281 rng;
   
-  std::vector < double > initial_population;
+  std::vector < double > initial_population_x;
   
   int total_population;
   double total_death_rate;
@@ -144,7 +144,7 @@ struct Grid_1d {
     //Spawn all speciments
     {
       int i;
-      for (double x_coord: initial_population) {
+      for (double x_coord: initial_population_x) {
         if (x_coord < 0 || x_coord > area_length_x) continue;
         
         i = static_cast < int > (floor(x_coord * cell_count_x / area_length_x));
@@ -226,10 +226,10 @@ struct Grid_1d {
         if (periodic) {
           if (i < 0) {
             distance = abs(cell_at(cell_death_x).coords_x[in_cell_death_index] -
-              cell_at(i + cell_count_x).coords_x[k] + area_length_x);
+              cell_at(i).coords_x[k] + area_length_x);
           } else if (i >= cell_count_x) {
             distance = abs(cell_at(cell_death_x).coords_x[in_cell_death_index] -
-              cell_at(i - cell_count_x).coords_x[k] - area_length_x);
+              cell_at(i).coords_x[k] - area_length_x);
           } else {
             distance = abs(cell_at(cell_death_x).coords_x[in_cell_death_index] - cell_at(i).coords_x[k]);
             
@@ -321,10 +321,10 @@ struct Grid_1d {
         if (periodic) {
           if (i < 0) {
             distance = abs(cell_at(new_i).coords_x[cell_population_at(new_i) - 1] -
-              cell_at(i + cell_count_x).coords_x[k] + area_length_x);
+              cell_at(i).coords_x[k] + area_length_x);
           } else if (i >= cell_count_x) {
             distance = abs(cell_at(new_i).coords_x[cell_population_at(new_i) - 1] -
-              cell_at(i - cell_count_x).coords_x[k] - area_length_x);
+              cell_at(i).coords_x[k] - area_length_x);
           } else {
             distance = abs(cell_at(new_i).coords_x[cell_population_at(new_i) - 1] - cell_at(i).coords_x[k]);
           }
@@ -372,8 +372,8 @@ struct Grid_1d {
   
   void run_for(double time) {
     if (time > 0.0) {
-      double time0 = this - > time;
-      while (this - > time < time0 + time) {
+      double time0 = this -> time;
+      while (this -> time < time0 + time) {
         make_event();
         if (total_population == 0)
           return;
@@ -413,7 +413,7 @@ struct Grid_1d {
     seed = Rcpp::as < int > (params["seed"]);
     rng = boost::random::lagged_fibonacci2281(uint32_t(seed));
     
-    initial_population = Rcpp::as < vector < double >> (params["initial_population"]);
+    initial_population_x = Rcpp::as < vector < double >> (params["initial_population_x"]);
     
     death_kernel_y = Rcpp::as < vector < double >> (params["death_kernel_y"]);
     death_cutoff_r = Rcpp::as < double > (params["death_kernel_r"]);
@@ -510,7 +510,7 @@ RCPP_MODULE(poisson_1d_module) {
   .field_readonly("dd", & Grid_1d::dd)
   
   .field_readonly("seed", & Grid_1d::seed)
-  .field_readonly("initial_population", & Grid_1d::initial_population)
+  .field_readonly("initial_population_x", & Grid_1d::initial_population_x)
   
   .field_readonly("death_kernel_y", & Grid_1d::death_kernel_y)
   .field_readonly("death_cutoff_r", & Grid_1d::death_cutoff_r)

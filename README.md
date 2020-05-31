@@ -20,11 +20,12 @@ TODO: Like Linux
 1) Prepare named list of simulation options. Parameters:
     - area_length_x - area size
     - cell_count_x - used to split simulation interval into subintervals for filtering negliable interactions.
+    - periodic - if TRUE, uses periodic boundaries.
     - b - poisson birth rate
     - d - poisson death rate
     - dd - competitive death rate
     - seed - RNG seed
-    - init_density - per unit starting density of speciments
+    - init_population - starting population vector
     - death_kernel_r - max death kernel interaction radius
     - death_kernel_y - death kernel values on uniform grid on [0, death_kernel_r] interval
     - birth_kernel_r - max birth kernel interaction radius

@@ -93,9 +93,9 @@ struct Grid_2d {
   Cell_2d & cell_at(int i,int j) {
     if (periodic) {
       if (i < 0) i += cell_count_x;
-      if (i > cell_count_x) i -= cell_count_x;
+      if (i >= cell_count_x) i -= cell_count_x;
       if (j < 0) j += cell_count_y;
-      if (j > cell_count_x) j -= cell_count_y;
+      if (j >= cell_count_y) j -= cell_count_y;
     }
     return cells[i*cell_count_x+j];
   }
@@ -103,9 +103,9 @@ struct Grid_2d {
   double & cell_death_rate_at(int i,int j) {
     if (periodic) {
       if (i < 0) i += cell_count_x;
-      if (i > cell_count_x) i -= cell_count_x;
+      if (i >= cell_count_x) i -= cell_count_x;
       if (j < 0) j += cell_count_y;
-      if (j > cell_count_x) j -= cell_count_y;
+      if (j >= cell_count_y) j -= cell_count_y;
     }
     return cell_death_rates[i*cell_count_x+j];
   }
@@ -113,9 +113,9 @@ struct Grid_2d {
   int & cell_population_at(int i,int j) {
     if (periodic) {
       if (i < 0) i += cell_count_x;
-      if (i > cell_count_x) i -= cell_count_x;
+      if (i >= cell_count_x) i -= cell_count_x;
       if (j < 0) j += cell_count_y;
-      if (j > cell_count_x) j -= cell_count_y;
+      if (j >= cell_count_y) j -= cell_count_y;
     }
     return cell_population[i*cell_count_x+j];
   }
@@ -174,7 +174,7 @@ struct Grid_2d {
         double y_coord=initial_population_y[sp_index];
         
         if (x_coord < 0 || x_coord > area_length_x) continue;
-        if (y_coord < 0 || y_coord > area_length_x) continue;
+        if (y_coord < 0 || y_coord > area_length_y) continue;
         
         int i = static_cast < int > (floor(x_coord * cell_count_x / area_length_x));
         int j = static_cast < int > (floor(y_coord * cell_count_y / area_length_y));
@@ -183,6 +183,7 @@ struct Grid_2d {
         if (j == cell_count_y) j--;
         
         cell_at(i,j).coords_x.push_back(x_coord);
+        cell_at(i,j).coords_y.push_back(y_coord);
         
         cell_at(i,j).death_rates.push_back(d);
         cell_death_rate_at(i,j) += d;
@@ -196,10 +197,13 @@ struct Grid_2d {
     for (int i = 0; i < cell_count_x; i++) {
       for (int j = 0; j < cell_count_y; j++) {
         for (int k = 0; k < cell_population_at(i,j); k++) {
+          
           for (int n = i - cull_x; n < i + cull_x + 1; n++) {
             if (!periodic && (n < 0 || n >= cell_count_x)) continue;
-            for (int m = j - cull_y; m<j + cull_y + 1; m++){
-              if (!periodic && (m < 0 || m >= cell_count_x)) continue; 
+            
+            for (int m = j - cull_y; m< j + cull_y + 1; m++){
+              if (!periodic && (m < 0 || m >= cell_count_y)) continue; 
+              
               for (int p = 0; p < cell_population_at(n,m); p++) {
                 if (i == n && j == m && k == p) continue; // same speciment
                 double delta_x,delta_y,distance;
@@ -214,7 +218,7 @@ struct Grid_2d {
                   }
                   if (m < 0) {
                     delta_y = cell_at(i,j).coords_y[k] - cell_at(n,m).coords_y[p] + area_length_y;
-                  } else if (n >= cell_count_x) {
+                  } else if (m >= cell_count_y) {
                     delta_y = cell_at(i,j).coords_y[k] - cell_at(n,m).coords_y[p] - area_length_y;
                   } else {
                     delta_y = cell_at(i,j).coords_y[k] - cell_at(n,m).coords_y[p];
@@ -331,21 +335,21 @@ struct Grid_2d {
     
     Cell_2d & parent_cell = cells[cell_index];
     
-    double radius = birth_reverse_cdf_spline(boost::random::uniform_01 < > ()(rng));
-    double phi = boost::random::uniform_01 < > ()(rng) *2 * M_PI;
+    double x_coord_new = parent_cell.coords_x[event_index] +
+      birth_reverse_cdf_spline(boost::random::uniform_01 < > ()(rng)) * (boost::random::bernoulli_distribution < > (0.5)(rng) * 2 - 1);
     
+    double y_coord_new = parent_cell.coords_y[event_index] +
+      birth_reverse_cdf_spline(boost::random::uniform_01 < > ()(rng)) * (boost::random::bernoulli_distribution < > (0.5)(rng) * 2 - 1);
     
-    double x_coord_new = parent_cell.coords_x[event_index] + radius*cos(phi);
-    double y_coord_new = parent_cell.coords_y[event_index] + radius*sin(phi);
     
     if (x_coord_new < 0 || x_coord_new > area_length_x || y_coord_new <0 || y_coord_new > area_length_y) {
       if (!periodic) {
         return;
       } else {
-        if (x_coord_new < 0) x_coord_new = x_coord_new + area_length_x;
-        if (x_coord_new > area_length_x) x_coord_new = x_coord_new - area_length_x;
-        if (y_coord_new < 0) y_coord_new = y_coord_new + area_length_y;
-        if (y_coord_new > area_length_y) y_coord_new = y_coord_new - area_length_y;
+        if (x_coord_new < 0)             x_coord_new += area_length_x;
+        if (x_coord_new > area_length_x) x_coord_new -= area_length_x;
+        if (y_coord_new < 0)             y_coord_new += area_length_y;
+        if (y_coord_new > area_length_y) y_coord_new -= area_length_y;
       }
     }
     
@@ -359,6 +363,7 @@ struct Grid_2d {
     //New speciment is added to the end of vector
     
     cell_at(new_i,new_j).coords_x.push_back(x_coord_new);
+    cell_at(new_i,new_j).coords_y.push_back(y_coord_new);
     cell_at(new_i,new_j).death_rates.push_back(d);
     
     cell_death_rate_at(new_i,new_j) += d;
@@ -370,7 +375,7 @@ struct Grid_2d {
     for (int i = new_i - cull_x; i < new_i + cull_x + 1; i++) {
       if (!periodic && (i < 0 || i >= cell_count_x)) continue;
       for (int j = new_j - cull_y; j < new_j + cull_y + 1; j++) {
-        if (!periodic && (i < 0 || i >= cell_count_x)) continue;
+        if (!periodic && (j < 0 ||j >= cell_count_y)) continue;
         for (int k = 0; k < cell_population_at(i,j); k++) {
           if (i == new_i && j == new_j && k == cell_population_at(new_i, new_j) - 1) continue;
         
@@ -388,10 +393,10 @@ struct Grid_2d {
           }
           if (j < 0) {
             delta_y = cell_at(new_i,new_j).coords_y[cell_population_at(new_i,new_j) - 1] -
-              cell_at(i,j).coords_x[k] + area_length_y;
-          } else if (j >= cell_count_x) {
+              cell_at(i,j).coords_y[k] + area_length_y;
+          } else if (j >= cell_count_y) {
             delta_y = cell_at(new_i,new_j).coords_y[cell_population_at(new_i,new_j) - 1] -
-              cell_at(i,j).coords_x[k] - area_length_y;
+              cell_at(i,j).coords_y[k] - area_length_y;
           } else {
             delta_y = cell_at(new_i,new_j).coords_y[cell_population_at(new_i,new_j) - 1] - cell_at(i,j).coords_y[k];
           }
@@ -578,7 +583,7 @@ RCPP_MODULE(poisson_2d_module) {
     .field_readonly("cell_count_y", & Grid_2d::cell_count_x)
   
   .field_readonly("cull_x", & Grid_2d::cull_x)
-  .field_readonly("cull_x", & Grid_2d::cull_y)
+  .field_readonly("cull_y", & Grid_2d::cull_y)
   .field_readonly("periodic", & Grid_2d::periodic)
   
   .field_readonly("b", & Grid_2d::b)

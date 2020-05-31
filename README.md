@@ -25,7 +25,7 @@ TODO: Like Linux
     - d - poisson death rate
     - dd - competitive death rate
     - seed - RNG seed
-    - init_population - starting population vector
+    - initial_population - starting population vector
     - death_kernel_r - max death kernel interaction radius
     - death_kernel_y - death kernel values on uniform grid on [0, death_kernel_r] interval
     - birth_kernel_r - max birth kernel interaction radius

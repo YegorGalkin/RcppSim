@@ -43,16 +43,18 @@ for (i in 1:nrow(params_all)) {
     params$area_length_x = params$area
     params$init_density = params$start_pop / params$area_length_x
     
+    set.seed(params$seed)
     sim_params <-
       list("area_length_x"=params$area_length_x, 
            "cell_count_x"=100,  
+           "periodic"=FALSE,
            
            "b"=params$b,    
            "d"=params$d,    
            "dd"=params$dd, 
            
            "seed"=params$seed,  
-           "init_density"=params$init_density,
+           "initial_population"=runif(params$start_pop,min=0,max=params$area_length_x),
            
            "death_kernel_r"=params$death_kernel_r,
            "death_kernel_y"=dnorm(x_grid_death, sd = params$sw),

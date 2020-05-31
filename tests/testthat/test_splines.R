@@ -4,13 +4,14 @@ test_that("Death spline is correctly built", {
   
   params<-list("area_length_x"=1,    
                "cell_count_x"=100,  
+               "periodic"=FALSE, 
                
                "b"=0.3,    
                "d"=0,    
                "dd"=0.01, 
                
                "seed"=1234,  
-               "init_density"=100,
+               "initial_population"=runif(100,min=0,max=1),
                
                "death_kernel_r"=1/200,
                "death_kernel_y"=dnorm((0:100)/20000,sd=0.001),
@@ -43,13 +44,14 @@ test_that("Birth reverse cdf spline is correctly built", {
   require(devtools)
   params<-list("area_length_x"=1,    
                "cell_count_x"=100,  
+               "periodic"=FALSE,
                
                "b"=0.3,    
                "d"=0,    
                "dd"=0.01, 
                
                "seed"=1234,  
-               "init_density"=100,
+               "initial_population"=runif(100,min=0,max=1),
                
                "death_kernel_r"=1/200,
                "death_kernel_y"=dnorm((0:100)/20000,sd=0.001),
@@ -94,13 +96,14 @@ test_that("Spline trimming works, try birth only",{
 
   params<-list("area_length_x"=1,    
                "cell_count_x"=100,  
+               "periodic"=FALSE,  
                
                "b"=0.3,    
                "d"=0,    
                "dd"=0.01, 
                
                "seed"=1234,  
-               "init_density"=100,
+               "initial_population"=runif(100,min=0,max=1),
                
                "death_kernel_r"=1/20,
                "death_kernel_y"=dnorm((0:1000)/20000,sd=0.001),

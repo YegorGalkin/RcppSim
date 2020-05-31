@@ -2,15 +2,15 @@ library(pacman)
 p_load(tidyverse,spatstat,future,promises,listenv)
 library(MathBioSim)
 
-result_dir = './11_28_2019/'
+result_dir = './31_05_2020/'
 dir.create(result_dir, showWarnings = FALSE)
 dir.create(paste0(result_dir,"pop/"), showWarnings = FALSE)
 dir.create(paste0(result_dir,"pcfs/"), showWarnings = FALSE)
 
-plan(multiprocess)
+plan(sequential)
 
-n_samples = 2000
-initial_population = 10000
+n_samples = 200
+initial_population = 1000
 time_limit = 36000
 
 params_all <-
@@ -44,16 +44,18 @@ for (i in 1:nrow(params_all)) {
     params$area_length_x = params$area
     params$init_density = params$start_pop / params$area_length_x
     
+    set.seed(params$seed)
     sim_params <-
       list("area_length_x"=params$area_length_x, 
            "cell_count_x"=100,  
+           "periodic"=FALSE,
            
            "b"=params$b,    
            "d"=params$d,    
            "dd"=params$dd, 
            
            "seed"=params$seed,  
-           "init_density"=params$init_density,
+           "initial_population"=runif(params$start_pop,min=0,max=params$area_length_x),
            
            "death_kernel_r"=params$death_kernel_r,
            "death_kernel_y"=dnorm(x_grid_death, sd = params$sw),

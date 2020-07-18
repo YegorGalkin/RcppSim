@@ -53,6 +53,10 @@ struct Grid_1d {
   std::vector < double > initial_population_x;
   
   int total_population;
+  
+  int population_limit;
+  bool pop_cap_reached;
+  
   double total_death_rate;
   
   double time;
@@ -86,7 +90,7 @@ struct Grid_1d {
   Cell_1d & cell_at(int i) {
     if (periodic) {
       if (i < 0) i += cell_count_x;
-      if (i > cell_count_x) i -= cell_count_x;
+      if (i >= cell_count_x) i -= cell_count_x;
     }
     return cells[i];
   }
@@ -94,7 +98,7 @@ struct Grid_1d {
   double & cell_death_rate_at(int i) {
     if (periodic) {
       if (i < 0) i += cell_count_x;
-      if (i > cell_count_x) i -= cell_count_x;
+      if (i >= cell_count_x) i -= cell_count_x;
     }
     return cell_death_rates[i];
   }
@@ -102,7 +106,7 @@ struct Grid_1d {
   int & cell_population_at(int i) {
     if (periodic) {
       if (i < 0) i += cell_count_x;
-      if (i > cell_count_x) i -= cell_count_x;
+      if (i >= cell_count_x) i -= cell_count_x;
     }
     return cell_population[i];
   }
@@ -362,22 +366,30 @@ struct Grid_1d {
       spawn_random();
     }
   }
+  
+  
   void run_events(int events) {
     if (events > 0) {
-      for (int i = 0; i < events; i++) {
-        make_event();
+    for (int i = 0; i < events; i++) {
+      if (total_population > population_limit){
+        pop_cap_reached = true;
+        return;
       }
+      make_event();
+    }
     }
   }
   
   void run_for(double time) {
     if (time > 0.0) {
-      double time0 = this -> time;
-      while (this -> time < time0 + time) {
-        make_event();
-        if (total_population == 0)
-          return;
+    double time0 = this -> time;
+    while (this -> time < time0 + time) {
+      if (total_population > population_limit){
+        pop_cap_reached = true;
+        return;
       }
+      make_event();
+    }
     }
   }
   
@@ -393,8 +405,10 @@ struct Grid_1d {
     return birth_reverse_cdf_spline(at);
   }
   
-  Grid_1d(Rcpp::List params): time(), event_count(), cells(), cell_death_rates(), cell_population(),
-  death_kernel_spline(), birth_kernel_spline(), birth_reverse_cdf_spline(), total_population() {
+  Grid_1d(Rcpp::List params): time(), event_count(), 
+  cells(), cell_death_rates(), cell_population(),
+  death_kernel_spline(), birth_kernel_spline(), birth_reverse_cdf_spline(), 
+  total_population(),population_limit(),pop_cap_reached(false) {
     
     //Parse parameters
     
@@ -428,6 +442,8 @@ struct Grid_1d {
     spline_precision = Rcpp::as < double > (params["spline_precision"]);
     
     periodic = Rcpp::as < bool > (params["periodic"]);
+    population_limit = Rcpp::as < int > (params["population_limit"]);
+    
     
     using boost::math::cubic_b_spline;
     //Build death spline, ensure 0 derivative at 0 (symmetric) and endpoint (expected no death interaction further)
@@ -547,8 +563,10 @@ RCPP_MODULE(poisson_1d_module) {
   .field_readonly("total_population", & Grid_1d::total_population)
   .field_readonly("total_death_rate", & Grid_1d::total_death_rate)
   .field_readonly("events", & Grid_1d::event_count)
-  .field_readonly("time", & Grid_1d::time);
+  .field_readonly("time", & Grid_1d::time)
   
+  .field_readonly("population_limit", & Grid_1d::population_limit)
+  .field_readonly("pop_cap_reached", & Grid_1d::pop_cap_reached);
 }
 
 # endif

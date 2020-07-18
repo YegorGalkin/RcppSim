@@ -7,3 +7,5 @@
 *.dll
 .Rhistory
 .vscode
+*.mp4
+*sims

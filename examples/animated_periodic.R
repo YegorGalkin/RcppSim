@@ -15,7 +15,8 @@ sim_params <-
        "dd"=0.01, 
        
        "seed"=1235,  
-       "initial_population"=c(0.1),
+       "initial_population_x"=c(0.1),
+       "population_limit" = 100,
        
        "death_kernel_r"=5,
        "death_kernel_y"=dnorm(x_grid_death, sd = 1),

@@ -80,12 +80,23 @@ list.files(paste0(result_dir,"pop/"),full.names = TRUE)%>%
   map_dfr(read_csv)%>%
   write_csv(paste0(result_dir,"pop.csv"))
 
-read_csv(paste0(result_dir,"pop.csv"))%>%
+summary_results <-
+  read_csv(paste0(result_dir,"pop.csv"))%>%
   group_by(id)%>%
   arrange(id,time)%>%
   slice_tail(prop=0.9)%>%
   summarise(average_pop=mean(pop))%>%
   left_join(params_all%>%select(id,area_length_x,comp_strength,comp_width))%>%
   mutate(cap_reached = pop_cap_reached, N = average_pop / area_length_x)%>%
-  select(id,comp_strength,comp_width,N,cap_reached,everything())%>%
-  write_csv(paste0(result_dir,"summary.csv"))
+  select(id,comp_strength,comp_width,N,cap_reached,everything())
+
+summary_results%>%write_csv(paste0(result_dir,"summary.csv"))
+
+ggplot(summary_results, 
+       aes(x=log10(comp_width), 
+           y=comp_strength, 
+           z = log10(N),
+           fill=log10(N))) +
+  geom_tile() +
+  geom_contour() + 
+  scale_fill_distiller(palette = "Spectral")

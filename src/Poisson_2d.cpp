@@ -101,7 +101,7 @@ struct Grid_2d {
       if (j < 0) j += cell_count_y;
       if (j >= cell_count_y) j -= cell_count_y;
     }
-    return cells[i*cell_count_x+j];
+    return cells[i+cell_count_y*j];
   }
   
   double & cell_death_rate_at(int i,int j) {
@@ -111,7 +111,7 @@ struct Grid_2d {
       if (j < 0) j += cell_count_y;
       if (j >= cell_count_y) j -= cell_count_y;
     }
-    return cell_death_rates[i*cell_count_x+j];
+    return cell_death_rates[i+cell_count_y*j];
   }
   
   int & cell_population_at(int i,int j) {
@@ -121,19 +121,19 @@ struct Grid_2d {
       if (j < 0) j += cell_count_y;
       if (j >= cell_count_y) j -= cell_count_y;
     }
-    return cell_population[i*cell_count_x+j];
+    return cell_population[i+cell_count_y*j];
   }
   
   
   vector < double > get_x_coords_at_cell(int i,int j) {
-    return cells[i*cell_count_x+j].coords_x;
+    return cells[i+cell_count_y*j].coords_x;
   }
   vector < double > get_y_coords_at_cell(int i,int j) {
-    return cells[i*cell_count_x+j].coords_y;
+    return cells[i+cell_count_y*j].coords_y;
   }
   
   vector < double > get_death_rates_at_cell(int i,int j) {
-    return cells[i*cell_count_x+j].death_rates;
+    return cells[i+cell_count_y*j].death_rates;
   }
   
   vector < double > get_all_x_coords() {
@@ -592,11 +592,11 @@ RCPP_MODULE(poisson_2d_module) {
   using namespace Rcpp;
   
   class_ < Grid_2d > ("poisson_2d")
-    .constructor < List > ()
-    .field_readonly("area_length_x", & Grid_2d::area_length_x)
-    .field_readonly("area_length_y", & Grid_2d::area_length_x)
-    .field_readonly("cell_count_x", & Grid_2d::cell_count_x)
-    .field_readonly("cell_count_y", & Grid_2d::cell_count_x)
+  .constructor < List > ()
+  .field_readonly("area_length_x", & Grid_2d::area_length_x)
+  .field_readonly("area_length_y", & Grid_2d::area_length_y)
+  .field_readonly("cell_count_x", & Grid_2d::cell_count_x)
+  .field_readonly("cell_count_y", & Grid_2d::cell_count_y)
   
   .field_readonly("cull_x", & Grid_2d::cull_x)
   .field_readonly("cull_y", & Grid_2d::cull_y)
@@ -648,11 +648,10 @@ RCPP_MODULE(poisson_2d_module) {
   .field_readonly("total_population", & Grid_2d::total_population)
   .field_readonly("total_death_rate", & Grid_2d::total_death_rate)
   .field_readonly("events", & Grid_2d::event_count)
-  .field_readonly("time", & Grid_2d::time);
+  .field_readonly("time", & Grid_2d::time)
   
-  
-  .field_readonly("population_limit", & Grid_1d::population_limit)
-  .field_readonly("pop_cap_reached", & Grid_1d::pop_cap_reached);
+  .field_readonly("population_limit", & Grid_2d::population_limit)
+  .field_readonly("pop_cap_reached", & Grid_2d::pop_cap_reached);
 }
 
 # endif

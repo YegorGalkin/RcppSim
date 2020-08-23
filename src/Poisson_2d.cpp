@@ -101,7 +101,7 @@ struct Grid_2d {
       if (j < 0) j += cell_count_y;
       if (j >= cell_count_y) j -= cell_count_y;
     }
-    return cells[i+cell_count_y*j];
+    return cells[i*cell_count_x+j];
   }
   
   double & cell_death_rate_at(int i,int j) {
@@ -111,7 +111,7 @@ struct Grid_2d {
       if (j < 0) j += cell_count_y;
       if (j >= cell_count_y) j -= cell_count_y;
     }
-    return cell_death_rates[i+cell_count_y*j];
+    return cell_death_rates[i*cell_count_x+j];
   }
   
   int & cell_population_at(int i,int j) {
@@ -121,19 +121,19 @@ struct Grid_2d {
       if (j < 0) j += cell_count_y;
       if (j >= cell_count_y) j -= cell_count_y;
     }
-    return cell_population[i+cell_count_y*j];
+    return cell_population[i*cell_count_x+j];
   }
   
   
   vector < double > get_x_coords_at_cell(int i,int j) {
-    return cells[i+cell_count_y*j].coords_x;
+    return cells[i*cell_count_x+j].coords_x;
   }
   vector < double > get_y_coords_at_cell(int i,int j) {
-    return cells[i+cell_count_y*j].coords_y;
+    return cells[i*cell_count_x+j].coords_y;
   }
   
   vector < double > get_death_rates_at_cell(int i,int j) {
-    return cells[i+cell_count_y*j].death_rates;
+    return cells[i*cell_count_x+j].death_rates;
   }
   
   vector < double > get_all_x_coords() {

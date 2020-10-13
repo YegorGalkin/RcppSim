@@ -1,15 +1,20 @@
+# Assuming everything is installed
 library(pacman)
 p_load(tidyverse, future, promises, listenv, fOptions)
 library(MathBioSim)
 
+# Prepare directory for results
 result_dir = './1_10_2020_sims_3d/'
 dir.create(result_dir, showWarnings = FALSE)
 dir.create(paste0(result_dir,"pop/"), showWarnings = FALSE)
 
+# Multiprocessing at simulation run level - single process for single parameter set
 plan(multisession)
 
-
 n_dim=3
+
+# This code block prepares parameters for simulations
+# Check params_all
 
 grid_points <- expand.grid(comp_strength = seq(1,10,by=0.1),
                            comp_width = 10^seq(-1,1,by=0.1))
@@ -24,9 +29,12 @@ params_all <- grid_points%>%
   mutate(area_length_x=10*pmax(sm,sw),periodic=TRUE,cell_count_x=10L)%>%
   mutate(n_samples = 100L)
 
-
+# Prepares enviroment for multiprocess results
 
 all_runs = listenv()
+
+# Checks if any simulations are already done - if simulator is killed, it retrieves 
+# already calculated data
 
 params_done <- list.files(paste0(result_dir,"pop/"))%>%str_remove('.csv')%>%as.numeric()
 
@@ -34,9 +42,11 @@ for (i in sample(setdiff(params_all$id,params_done))) {
   params=params_all[i,]
   all_runs[[i]]%<-%
   {
+    # Sets up parameters
     x_grid_death = seq(0,params$kernel_trim * params$sw, length.out = params$spline_nodes)
     x_grid_birth = seq(0,params$kernel_trim * params$sm, length.out = params$spline_nodes)
     
+    # Uniform ish initial point distribution
     initial_points = fOptions::runif.halton(params$initial_population,n_dim) * params$area_length_x
     
     sim_params <-
@@ -70,6 +80,7 @@ for (i in sample(setdiff(params_all$id,params_done))) {
            "spline_precision" = params$spline_precision 
       )
     
+    # Create simulator and store population and time
     sim<-new(poisson_3d,sim_params)
     time<-numeric(params$n_samples)
     pop<-numeric(params$n_samples)
@@ -88,7 +99,10 @@ for (i in sample(setdiff(params_all$id,params_done))) {
   }
 }
 
-pop_cap_reached <- all_runs%>%as.list()%>%unlist()
+
+# Wait for completion
+all_runs%>%as.list()
+# Prepare summary results table and plots
 
 write_csv(params_all,paste0(result_dir,"params.csv"))
 

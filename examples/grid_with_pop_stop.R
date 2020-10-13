@@ -1,27 +1,35 @@
+# Assuming everything is installed
 library(pacman)
 p_load(tidyverse, future, promises, listenv)
 library(MathBioSim)
 
+# Prepare directory for results
 result_dir = './7_18_2020_sims/'
 dir.create(result_dir, showWarnings = FALSE)
 dir.create(paste0(result_dir,"pop/"), showWarnings = FALSE)
 
+# Multiprocessing at simulation run level - single process for single parameter set
 plan(multiprocess)
+
+n_dim=1
+
+# This code block prepares parameters for simulations
+# Check params_all
 
 grid_points <- expand.grid(comp_strength = seq(0.1,10,by=0.1),
                            comp_width = 10^seq(-2,1,by=0.1))
 
 params_all <- grid_points%>%
   mutate(b=1,d=0,sm=1,sw=comp_width)%>%
-  mutate(dd=comp_strength*sw*sqrt(2*pi))%>%
+  mutate(dd=comp_strength*(sw*sw*2*pi)^(n_dim/2))%>%
   mutate(kernel_trim = 5, spline_precision = 1e-9, spline_nodes=1001L)%>%
   mutate(death_kernel_r=kernel_trim*sw,birth_kernel_r=kernel_trim*sm)%>%
   mutate(id=row_number(),seed=1234L)%>%
-  mutate(initial_population = 1e4L, population_limit = 1e5L)%>%
+  mutate(initial_population = 1e4L, population_limit = 100e3L)%>%
   mutate(area_length_x=100*pmax(sm,sw),periodic=TRUE,cell_count_x=100L)%>%
   mutate(n_samples = 100L)
 
-
+# Prepares enviroment for multiprocess results
 
 all_runs = listenv()
 
@@ -57,22 +65,24 @@ for (i in params_all$id) {
     sim<-new(poisson_1d,sim_params)
     time<-numeric(params$n_samples)
     pop<-numeric(params$n_samples)
-    
+    pop_cap_reached<-numeric(params$n_samples)
     
     for(j in 1:params$n_samples){
       sim$run_events(sim$total_population)
       pop[j]=sim$total_population
       time[j]=sim$time
+      cap_reached=sim$pop_cap_reached
     }
     
-    pops<-data.frame(id=i,time=time,pop=pop)
+    pops<-data.frame(id=i,time=time,pop=pop,cap_reached=cap_reached)
     
     write_csv(pops,paste0(result_dir,"pop/",i,".csv"))
-    sim$pop_cap_reached
   }
 }
 
-pop_cap_reached <- all_runs%>%as.list()%>%unlist()
+# Wait for completion
+all_runs%>%as.list()
+# Prepare summary results table and plots
 
 write_csv(params_all,paste0(result_dir,"params.csv"))
 
@@ -84,11 +94,11 @@ summary_results <-
   read_csv(paste0(result_dir,"pop.csv"))%>%
   group_by(id)%>%
   arrange(id,time)%>%
-  slice_tail(prop=0.9)%>%
-  summarise(average_pop=mean(pop))%>%
+  slice_tail(prop=0.8)%>%
+  summarise(average_pop=mean(pop),cap_reached=any(cap_reached))%>%
   left_join(params_all%>%select(id,area_length_x,comp_strength,comp_width))%>%
-  mutate(cap_reached = pop_cap_reached, N = average_pop / area_length_x)%>%
-  select(id,comp_strength,comp_width,N,cap_reached,everything())
+  mutate(N = average_pop / area_length_x^n_dim)%>%
+  select(id,comp_strength,comp_width,N,everything()) 
 
 summary_results%>%write_csv(paste0(result_dir,"summary.csv"))
 

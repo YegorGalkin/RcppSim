@@ -4,7 +4,7 @@ p_load(tidyverse, future, promises, listenv, fOptions)
 library(MathBioSim)
 
 # Prepare directory for results
-result_dir = './1_10_2020_sims_3d/'
+result_dir = './14_10_2020_sims_3d/'
 dir.create(result_dir, showWarnings = FALSE)
 dir.create(paste0(result_dir,"pop/"), showWarnings = FALSE)
 
@@ -29,7 +29,11 @@ params_all <- grid_points%>%
   mutate(area_length_x=10*pmax(sm,sw),periodic=TRUE,cell_count_x=10L)%>%
   mutate(n_samples = 100L)
 
-# Prepares enviroment for multiprocess results
+mv_normal_radius<-function(r,sd,n_dim){
+  1/(2*pi*sd*sd)^(n_dim/2)*exp(-r^2/(2*sd^2))
+}
+
+# Prepares environment for multiprocess results
 
 all_runs = listenv()
 
@@ -38,7 +42,7 @@ all_runs = listenv()
 
 params_done <- list.files(paste0(result_dir,"pop/"))%>%str_remove('.csv')%>%as.numeric()
 
-for (i in sample(setdiff(params_all$id,params_done))) {
+for (i in setdiff(params_all$id,params_done)%>%.[sample(length(.))]) {
   params=params_all[i,]
   all_runs[[i]]%<-%
   {
@@ -72,7 +76,7 @@ for (i in sample(setdiff(params_all$id,params_done))) {
            "population_limit" = params$population_limit,
            
            "death_kernel_r"=params$death_kernel_r,
-           "death_kernel_y"=dnorm(x_grid_death, sd = params$sw),
+           "death_kernel_y"=mv_normal_radius(r=x_grid_death, sd=params$sw, n_dim=n_dim),
            
            "birth_kernel_r"=params$birth_kernel_r,
            "birth_kernel_y"=dnorm(x_grid_birth, sd = params$sm), 

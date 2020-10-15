@@ -51,7 +51,7 @@ sim_params <-
        
        # Here we specify death and birth kernels
        # They are evaluated on a grid with 1001 points on [0,5] interval
-       # They are standart normal distributions - 0 mean and 1 standart deviation
+       # They are standard normal distributions - 0 mean and 1 standard deviation
        # dnorm calculates density for given grid with given normal distribution parameters
        
        "death_kernel_r"=5, 

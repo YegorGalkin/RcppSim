@@ -405,9 +405,19 @@ struct Grid_3d {
     
     Cell_3d & parent_cell = cells[cell_index];
     
-    double x_coord_new = parent_cell.coords_x[event_index] + birth_reverse_cdf_spline(boost::random::uniform_01 < > ()(rng)) * (boost::random::bernoulli_distribution < > (0.5)(rng) * 2 - 1);
-    double y_coord_new = parent_cell.coords_y[event_index] + birth_reverse_cdf_spline(boost::random::uniform_01 < > ()(rng)) * (boost::random::bernoulli_distribution < > (0.5)(rng) * 2 - 1);
-    double z_coord_new = parent_cell.coords_z[event_index] + birth_reverse_cdf_spline(boost::random::uniform_01 < > ()(rng)) * (boost::random::bernoulli_distribution < > (0.5)(rng) * 2 - 1);
+    double x_dispacement = birth_cutoff_r;
+    double y_dispacement = birth_cutoff_r;
+    double z_dispacement = birth_cutoff_r;
+    
+    while(x_dispacement*x_dispacement+y_dispacement*y_dispacement+z_dispacement*z_dispacement>birth_cutoff_r*birth_cutoff_r){
+      x_dispacement = birth_reverse_cdf_spline(boost::random::uniform_01 < > ()(rng)) * (boost::random::bernoulli_distribution < > (0.5)(rng) * 2 - 1);
+      y_dispacement = birth_reverse_cdf_spline(boost::random::uniform_01 < > ()(rng)) * (boost::random::bernoulli_distribution < > (0.5)(rng) * 2 - 1);
+      z_dispacement = birth_reverse_cdf_spline(boost::random::uniform_01 < > ()(rng)) * (boost::random::bernoulli_distribution < > (0.5)(rng) * 2 - 1);
+    }
+    
+    double x_coord_new = parent_cell.coords_x[event_index] + x_dispacement;
+    double y_coord_new = parent_cell.coords_y[event_index] + y_dispacement;
+    double z_coord_new = parent_cell.coords_z[event_index] + z_dispacement;
 
     if (x_coord_new < 0 || x_coord_new > area_length_x || y_coord_new <0 || y_coord_new > area_length_y || z_coord_new <0 || z_coord_new > area_length_z) {
       if (!periodic) {

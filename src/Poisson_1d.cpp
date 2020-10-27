@@ -546,7 +546,7 @@ RCPP_MODULE(poisson_1d_module) {
   .field_readonly("cell_death_rates", & Grid_1d::cell_death_rates)
   .field_readonly("cell_population", & Grid_1d::cell_population)
   
-  .method("get_all_coordinates", & Grid_1d::get_all_coords)
+  .method("get_all_x_coordinates", & Grid_1d::get_all_coords)
   .method("get_all_death_rates", & Grid_1d::get_all_death_rates)
   
   .method("get_x_coordinates_in_cell", & Grid_1d::get_coords_at_cell)

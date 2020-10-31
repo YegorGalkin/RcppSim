@@ -12,7 +12,11 @@ class Grid {
     std::vector<size_t> chunkPopulation;
     
     Position<dim> cellCounts;
+
+public:
     const size_t speciesCount;
+    const bool isPeriodic;
+    const Coord<dim> areaLength;
 
 private:
     size_t GetOffset(const Position<dim>& pos) const;

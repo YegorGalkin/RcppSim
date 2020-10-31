@@ -9,3 +9,5 @@
 .vscode
 *.mp4
 *sims
+.RData
+src/RcppExports.cpp

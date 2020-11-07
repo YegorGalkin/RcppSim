@@ -8,7 +8,7 @@ double Ro(const Grid<dim> &grid, const Unit<dim> &a, const Unit<dim> &b) {
     if (grid.isPeriodic) {
         double calc = 0;
         for (size_t i = 0; i < dim; ++i) {
-            auto dist = std::abs(a.Coord[i] - b.Coord[i])
+            auto dist = std::abs(a.Coord[i] - b.Coord[i]);
             dist = std::min(
                 dist,
                 grid.areaLength[i] - dist

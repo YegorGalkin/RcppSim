@@ -4,6 +4,7 @@
 
 #include "defines.h"
 #include "chunk.h"
+#include "model_parameters.h"
 
 template <size_t dim>
 class Grid {
@@ -17,6 +18,7 @@ public:
     const size_t speciesCount;
     const bool isPeriodic;
     const Coord<dim> areaLength;
+    const ModelParameters modelParameters;
 
 private:
     size_t GetOffset(const Position<dim>& pos) const;

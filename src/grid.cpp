@@ -74,6 +74,18 @@ void Grid<dim>::AddDeathRate(Unit<dim>& a) {
 }
 
 template <size_t dim>
+void Grid<dim>::IncrementPopulation(Unit<dim>& a) {
+    ++a.ChunkPopulation();
+    ++TotalPopulation[a.Species()];
+}
+
+template <size_t dim>
+void Grid<dim>::DecrementPopulation(Unit<dim>& a) {
+    --a.ChunkPopulation();
+    --TotalPopulation[a.Species()];
+}
+
+template <size_t dim>
 void Grid<dim>::SubDeathRate(Unit<dim>& a) {
     AddInteraction(a, -ModelParameters.GetD(a.Species()));
 }

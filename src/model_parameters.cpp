@@ -133,14 +133,18 @@ inline double ModelParameters::GetDeathKernel(size_t a, size_t b, double distanc
     return DeathKernel[GetOffset(a, b)](distance);
 }
 
-inline double ModelParameters::GetInteraction(size_t a, size_t b, double distance) const {
+double ModelParameters::GetDD(size_t a, size_t b) const {
+    return DD[GetOffset(a, b)];
+}
+
+double ModelParameters::GetInteraction(size_t a, size_t b, double distance) const {
     if (distance > GetCutoff(a, b)) {
         return -1;
     }
     return GetDD(a, b) * GetDeathKernel(a, b, distance);
 }
 
-inline double ModelParameters::GetD(size_t species) const {
+double ModelParameters::GetD(size_t species) const {
     return D[species];
 }
 

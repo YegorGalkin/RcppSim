@@ -34,6 +34,6 @@ private:
     double GetCutoff(size_t a, size_t b) const;
     
 public:
-    inline double GetInteraction(size_t speciesA, size_t speciesB, double distance) const;
-    inline double GetD(size_t species) const;
+    double GetInteraction(size_t speciesA, size_t speciesB, double distance) const;
+    double GetD(size_t species) const;
 }; 

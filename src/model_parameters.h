@@ -7,8 +7,10 @@
 #include <vector>
 
 class ModelParameters {
+public:
     const size_t SpeciesCount;
     
+private:
     std::vector<double> B;
     std::vector<double> D;
     std::vector<double> DD;

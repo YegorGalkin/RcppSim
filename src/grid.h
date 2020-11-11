@@ -5,6 +5,7 @@
 #include "defines.h"
 #include "chunk.h"
 #include "model_parameters.h"
+#include "unit.h"
 
 template <size_t dim>
 class Grid {
@@ -13,9 +14,10 @@ class Grid {
     std::vector<size_t> chunkPopulation;
     
     Position<dim> cellCounts;
+    
+    std::vector<double> TotalDeathRate;
 
 public:
-    const size_t speciesCount;
     const bool isPeriodic;
     const Coord<dim> areaLength;
     const ModelParameters modelParameters;
@@ -23,6 +25,7 @@ public:
 private:
     size_t GetOffset(const Position<dim>& pos) const;
     size_t GetOffset(const Position<dim>& pos, size_t species) const;
+    void AddInteraction(Unit<dim>& a, double interaction);
     
 public:
     Chunk<dim>& GetChunk(const Position<dim>& chunkPos);

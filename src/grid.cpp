@@ -45,6 +45,13 @@ size_t Grid<dim>::GetCellCount(size_t i) const {
     return cellCounts[i];
 }
 
+template <size_t dim>
+void Grid<dim>::AddInteraction(Unit<dim>& unit, double interaction) {
+    unit.DeathRate() += interaction;
+    unit.ChunkDeathRate() += interaction;
+    TotalDeathRate[modelParameters.SpeciesCount] += interaction;
+}
+
 template class Grid<1>;
 template class Grid<2>;
 template class Grid<3>;

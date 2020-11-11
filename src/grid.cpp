@@ -1,5 +1,7 @@
 #include "grid.h"
 
+#include "calculations.h"
+
 template<>
 size_t Grid<1>::GetOffset(const Position<1>& pos) const {
     return pos[0];
@@ -50,6 +52,20 @@ void Grid<dim>::AddInteraction(Unit<dim>& unit, double interaction) {
     unit.DeathRate() += interaction;
     unit.ChunkDeathRate() += interaction;
     TotalDeathRate[ModelParameters.SpeciesCount] += interaction;
+}
+
+template <size_t dim>
+void Grid<dim>::AddInteraction(Unit<dim>& a, Unit<dim>& b) {
+    auto interaction = ModelParameters.GetInteraction(
+        a.Species(),
+        b.Species(),
+        Ro(*this, a, b)
+    );
+    if (interaction < 0) {
+        return;
+    }
+    AddInteraction(a, interaction);
+    AddInteraction(b, interaction);
 }
 
 template class Grid<1>;

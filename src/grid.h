@@ -9,18 +9,18 @@
 
 template <size_t dim>
 class Grid {
-    std::vector<Chunk<dim>> chunks;
-    std::vector<double> chunkDeathRate;
-    std::vector<size_t> chunkPopulation;
+    std::vector<Chunk<dim>> Chunks;
+    std::vector<double> ChunkDeathRate;
+    std::vector<size_t> ChunkPopulation;
     
-    Position<dim> cellCounts;
+    Position<dim> CellCounts;
     
     std::vector<double> TotalDeathRate;
 
 public:
-    const bool isPeriodic;
-    const Coord<dim> areaLength;
-    const ModelParameters modelParameters;
+    const bool IsPeriodic;
+    const Coord<dim> AreaLength;
+    const ModelParameters ModelParameters;
 
 private:
     size_t GetOffset(const Position<dim>& pos) const;

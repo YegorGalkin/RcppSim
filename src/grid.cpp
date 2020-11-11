@@ -68,6 +68,16 @@ void Grid<dim>::AddInteraction(Unit<dim>& a, Unit<dim>& b) {
     AddInteraction(b, interaction);
 }
 
+template <size_t dim>
+void Grid<dim>::AddDeathRate(Unit<dim>& a) {
+    AddInteraction(a, ModelParameters.GetD(a.Species()));
+}
+
+template <size_t dim>
+void Grid<dim>::SubDeathRate(Unit<dim>& a) {
+    AddInteraction(a, -ModelParameters.GetD(a.Species()));
+}
+
 template class Grid<1>;
 template class Grid<2>;
 template class Grid<3>;

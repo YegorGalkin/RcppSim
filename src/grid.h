@@ -27,6 +27,8 @@ private:
     size_t GetOffset(const Position<dim>& pos, size_t species) const;
     void AddInteraction(Unit<dim>& a, double interaction);
     void AddInteraction(Unit<dim>& a, Unit<dim>& b);
+    void AddDeathRate(Unit<dim>& a);
+    void SubDeathRate(Unit<dim>& a);
     
 public:
     Chunk<dim>& GetChunk(const Position<dim>& chunkPos);

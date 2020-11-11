@@ -140,6 +140,10 @@ inline double ModelParameters::GetInteraction(size_t a, size_t b, double distanc
     return GetDD(a, b) * GetDeathKernel(a, b, distance);
 }
 
+inline double ModelParameters::GetD(size_t species) const {
+    return D[species];
+}
+
 std::string ModelParameters::GetName(std::string name, size_t i) const {
     if (SpeciesCount == 1) {
         return name;

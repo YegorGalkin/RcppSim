@@ -99,6 +99,7 @@ bool Grid<dim>::AddUnit(Coord<dim> coord, size_t species) {
             AddInteraction(newUnit, unit);
         }
     }
+    return true;
 }
 
 template <size_t dim>

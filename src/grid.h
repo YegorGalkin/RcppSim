@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "defines.h"
+#include "area.h"
 #include "chunk.h"
 #include "model_parameters.h"
 #include "unit.h"
@@ -19,8 +20,7 @@ class Grid {
     std::vector<size_t> TotalPopulation;
 
 public:
-    const bool IsPeriodic;
-    const Coord<dim> AreaLength;
+    const Area<dim> Area;
     const ModelParameters ModelParameters;
 
 private:

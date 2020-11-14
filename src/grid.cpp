@@ -1,7 +1,5 @@
 #include "grid.h"
 
-#include "calculations.h"
-
 template<>
 size_t Grid<1>::GetOffset(const Position<1>& pos) const {
     return pos[0];
@@ -59,7 +57,7 @@ void Grid<dim>::AddInteraction(Unit<dim>& a, Unit<dim>& b) {
     auto interaction = ModelParameters.GetInteraction(
         a.Species(),
         b.Species(),
-        Ro(*this, a, b)
+        Area.Ro(a, b)
     );
     if (interaction < 0) {
         return;

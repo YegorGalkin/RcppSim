@@ -5,6 +5,9 @@
 using pos_t = int32_t;
 
 template<size_t dim>
+struct Area;
+
+template<size_t dim>
 struct Chunk;
 
 template <size_t dim>

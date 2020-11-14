@@ -85,7 +85,7 @@ Spline GetReverseSpline(std::vector<double> func, double cutoff) {
     );
 }
 
-ModelParameters::ModelParameters(Rcpp::List params) : SpeciesCount(1) {
+ModelParameters::ModelParameters(const Rcpp::List& params) : SpeciesCount(1) {
     if (params.hasSlot(SPECIES_FIELD)) {
         const_cast<size_t&>(SpeciesCount) =  Rcpp::as<size_t>(params[SPECIES_FIELD]);
     }
@@ -148,14 +148,14 @@ double ModelParameters::GetD(size_t species) const {
     return D[species];
 }
 
-std::string ModelParameters::GetName(std::string name, size_t i) const {
+std::string ModelParameters::GetName(const std::string& name, size_t i) const {
     if (SpeciesCount == 1) {
         return name;
     }
     return name + "_" + std::to_string(i + 1);
 }
 
-std::string ModelParameters::GetName(std::string name, size_t i, size_t j) const {
+std::string ModelParameters::GetName(const std::string& name, size_t i, size_t j) const {
     if (SpeciesCount == 1) {
         return name;
     }

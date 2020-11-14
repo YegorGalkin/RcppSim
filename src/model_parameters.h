@@ -21,15 +21,15 @@ private:
     std::vector<boost::math::cubic_b_spline<double>> BirthReverseKernel;
 
 public:
-    ModelParameters(Rcpp::List params);
+    ModelParameters(const Rcpp::List& params);
     double GetDD(size_t a, size_t b) const;
     double GetDeathKernel(size_t a, size_t b, double distance) const;
     boost::integer_range<size_t> IterSpecies() const;
     
     
 private:
-    std::string GetName(std::string name, size_t i) const;
-    std::string GetName(std::string name, size_t i, size_t j) const;
+    std::string GetName(const std::string& name, size_t i) const;
+    std::string GetName(const std::string& name, size_t i, size_t j) const;
     inline size_t GetOffset(size_t i, size_t j) const;
     double GetCutoff(size_t a, size_t b) const;
     

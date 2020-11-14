@@ -7,6 +7,7 @@
 #include "chunk.h"
 #include "model_parameters.h"
 #include "unit.h"
+#include "iterator.h"
 
 template <size_t dim>
 class Grid {
@@ -15,6 +16,7 @@ class Grid {
     std::vector<size_t> ChunkPopulation;
     
     Position<dim> CellCounts;
+    Position<dim> LocalRadius;
     
     std::vector<double> TotalDeathRate;
     std::vector<size_t> TotalPopulation;
@@ -33,10 +35,11 @@ private:
     void AddDeathRate(Unit<dim>& a);
     void SubDeathRate(Unit<dim>& a);
     
-    void IncrementPopulation(Unit<dim>& a);
-    void DecrementPopulation(Unit<dim>& a);
+    Range<UnitIterator<dim>> GetLocalUnits(const Unit<dim>& unit);
     
 public:
+    bool AddUnit(Coord<dim> coord, size_t species); // return if unit added
+
     Chunk<dim>& GetChunk(const Position<dim>& chunkPos);
     double& GetChunkDeathRate(const Position<dim>& chunkPos, size_t species);
     size_t& GetChunkPopulation(const Position<dim>& chunkPos, size_t species);

@@ -13,8 +13,14 @@ struct Chunk;
 template <size_t dim>
 struct Grid;
 
+template <class It>
+class Range;
+
 template<size_t dim>
 class Unit;
+
+template <size_t dim>
+class UnitIterator;
 
 template <size_t dim>
 using Coord = std::array<double, dim>;

@@ -65,3 +65,24 @@ public:
     bool operator!=(const UnitIterator<dim>& other) const;
     bool operator==(const UnitIterator<dim>& other) const;
 };
+
+// TODO figure out why UnitIterator not work with boost::iterator_range
+template <class It>
+class Range {
+    It Begin;
+    It End;
+    
+public:
+    Range(It begin, It end)
+        : Begin(begin)
+        , End(end)
+    {}
+    
+    It begin() const {
+        return Begin;
+    }
+    
+    It end() const {
+        return End;
+    } 
+};

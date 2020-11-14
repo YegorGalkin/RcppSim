@@ -1,7 +1,11 @@
 #include <algorithm>
 #include <cmath>
 
+#include <boost/range/irange.hpp>
+
 #include "area.h"
+
+using boost::irange;
 
 template<> std::string Area<1>::GetName(const std::string& name, size_t i) {
     return name;
@@ -18,7 +22,7 @@ template <size_t dim>
 double Area<dim>::Ro(const Unit<dim> &a, const Unit<dim> &b) const {
     if (IsPeriodic) {
         double calc = 0;
-        for (size_t i = 0; i < dim; ++i) {
+        for (auto i : irange(dim)) {
             auto dist = std::abs(a.Coord()[i] - b.Coord()[i]);
             dist = std::min<double>(
                 dist,
@@ -30,6 +34,59 @@ double Area<dim>::Ro(const Unit<dim> &a, const Unit<dim> &b) const {
         
     }
     return Ro(a.Coord(), b.Coord());
+}
+
+template <size_t dim>
+bool Area<dim>::IsInArea(const Coord<dim>& coord) const {
+    if (IsPeriodic) {
+        return true;
+    }
+    for (auto i : irange(dim)) {
+        if (coord[i] < 0 || coord[i] > AreaLength[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+template <size_t dim>
+void Area<dim>::FixCoord(Coord<dim>& coord) const {
+    for (auto i : irange(dim)) {
+        const auto len = AreaLength[i];
+        auto& x = coord[i];
+        
+        while (x < 0) {
+            x += len;
+        }
+        while (x > len) {
+            x -= len;
+        }
+    }
+}
+
+template <size_t dim>
+bool Area<dim>::GetIsPeriodic() const {
+    return IsPeriodic;
+}
+
+template <size_t dim>
+Position<dim> Area<dim>::GetCellIndex(const Position<dim>& cellCounts, const Coord<dim>& coord) const {
+    Position<dim> res;
+    for (auto i : irange(dim)) {
+        const auto x = coord[i];
+        const auto len = AreaLength[i];
+        const auto counts = cellCounts[i];
+        auto& pos = res[i];
+        
+        pos = std::floor(x * counts / len);
+        if (pos >= counts) {
+            pos = counts - 1;
+        }
+        if (pos <= 0) {
+            pos = 0;
+        }
+    }
+    return res;
 }
 
 template<>

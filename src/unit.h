@@ -9,7 +9,6 @@ template<size_t dim>
 class Unit {
     Chunk<dim>& chunk;
     double& chunkDeathRate;
-    size_t& chunkPopulation;
     const Position<dim> chunkPos;
     const size_t i;
 
@@ -17,7 +16,6 @@ public:
     Unit(Grid<dim>& grid, Position<dim> chunkPosition, size_t i)
         : chunk(grid.GetChunk(chunkPosition))
         , chunkDeathRate(grid.GetChunkDeathRate(chunkPosition, chunk.GetSpecies(i)))
-        , chunkPopulation(grid.GetChunkPopulation(chunkPosition, chunk.GetSpecies(i)))
         , chunkPos(chunkPosition)
         , i(i)
     {}
@@ -27,8 +25,9 @@ public:
     double& DeathRate();
     size_t Species() const;
     double& ChunkDeathRate();
-    size_t& ChunkPopulation();
+    size_t ChunkPopulation() const;
     const Position<dim>& ChunkPosition() const;
     
-    bool operator==(const Unit<dim>& other);
+    bool operator==(const Unit<dim>& other) const;
+    bool operator!=(const Unit<dim>& other) const;
 };

@@ -24,6 +24,10 @@ public:
 public:
     static double Ro(const Coord<dim>& a, const Coord<dim>& b);
     double Ro(const Unit<dim> &a, const Unit<dim> &b) const;
+    bool IsInArea(const Coord<dim>& coord) const;
+    bool GetIsPeriodic() const;
+    void FixCoord(Coord<dim>& coord) const;
+    Position<dim> GetCellIndex(const Position<dim>& cellCounts, const Coord<dim>& coord) const;
     
 private:
     std::string GetName(const std::string& name, size_t i);

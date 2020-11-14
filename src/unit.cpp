@@ -1,5 +1,7 @@
 #include "unit.h"
 
+using boost::irange;
+
 template <size_t dim>
 const Coord<dim>& Unit<dim>::Coord() const {
     return chunk.GetCoord(i);
@@ -21,8 +23,26 @@ double& Unit<dim>::ChunkDeathRate() {
 }
 
 template <size_t dim>
-size_t& Unit<dim>::ChunkPopulation() {
-    return chunkPopulation;
+size_t Unit<dim>::ChunkPopulation() const {
+    return chunk.GetPopulation();
+}
+
+template <size_t dim>
+bool Unit<dim>::operator==(const Unit<dim>& other) const {
+    if (i != other.i) {
+        return false;
+    }
+    for (auto i : irange(dim)) {
+        if (chunkPos[i] != other.chunkPos[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+template <size_t dim>
+bool Unit<dim>::operator!=(const Unit<dim>& other) const {
+    return !((*this) == other);
 }
 
 template <size_t dim>

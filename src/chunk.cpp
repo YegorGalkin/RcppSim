@@ -7,7 +7,7 @@ Unit<dim>& Chunk<dim>::AddUnit(Grid<dim>& grid, Position<dim> chunkPosition, Coo
     const auto i = Coords.size();
     
     Coords.push_back(coord);
-    DeathRate.push_back(0.);
+    DeathRate.push_back(0.0);
     Species.push_back(species);
 }
 

@@ -1,5 +1,9 @@
 #include "grid.h"
 
+#include <algorithm>
+
+using boost::irange;
+
 template<>
 size_t Grid<1>::GetOffset(const Position<1>& pos) const {
     return pos[0];
@@ -72,20 +76,51 @@ void Grid<dim>::AddDeathRate(Unit<dim>& a) {
 }
 
 template <size_t dim>
-void Grid<dim>::IncrementPopulation(Unit<dim>& a) {
-    ++a.ChunkPopulation();
-    ++TotalPopulation[a.Species()];
-}
-
-template <size_t dim>
-void Grid<dim>::DecrementPopulation(Unit<dim>& a) {
-    --a.ChunkPopulation();
-    --TotalPopulation[a.Species()];
-}
-
-template <size_t dim>
 void Grid<dim>::SubDeathRate(Unit<dim>& a) {
     AddInteraction(a, -ModelParameters.GetD(a.Species()));
+}
+
+template <size_t dim>
+bool Grid<dim>::AddUnit(Coord<dim> coord, size_t species) {
+    if (!Area.IsInArea(coord)) {
+        return false;
+    }
+    Area.FixCoord(coord);
+    
+    auto pos = Area.GetCellIndex(CellCounts, coord);
+    auto& chunk = GetChunk(pos);
+    auto& newUnit = chunk.AddUnit(*this, pos, coord, species);
+    
+    ++TotalPopulation[species];
+    AddDeathRate(newUnit);
+    
+    for (auto unit : GetLocalUnits(newUnit)) {
+        if (newUnit != unit) {
+            AddInteraction(newUnit, unit);
+        }
+    }
+}
+
+template <size_t dim>
+Range<UnitIterator<dim>> Grid<dim>::GetLocalUnits(const Unit<dim>& unit) {
+    Position<dim> startPos, endPos;
+    const auto& unitCoord = unit.Coord();
+    for (auto i : irange(dim)) {
+        startPos[i] = unitCoord[i] - LocalRadius[i];
+        endPos[i] = unitCoord[i] + LocalRadius[i];
+    }
+    return {
+        UnitIterator<dim>(
+            *this,
+            startPos,
+            endPos,
+            Area.GetIsPeriodic()
+        ),
+        UnitIterator<dim>(
+            *this,
+            /* isEnd = */ true
+        )
+    };
 }
 
 template class Grid<1>;

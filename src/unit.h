@@ -16,8 +16,8 @@ class Unit {
 public:
     Unit(Grid<dim>& grid, Position<dim> chunkPosition, size_t i)
         : chunk(grid.GetChunk(chunkPosition))
-        , chunkDeathRate(grid.GetChunkDeathRate(chunkPosition, chunk.species[i]))
-        , chunkPopulation(grid.GetChunkPopulation(chunkPosition, chunk.species[i]))
+        , chunkDeathRate(grid.GetChunkDeathRate(chunkPosition, chunk.GetSpecies(i)))
+        , chunkPopulation(grid.GetChunkPopulation(chunkPosition, chunk.GetSpecies(i)))
         , chunkPos(chunkPosition)
         , i(i)
     {}

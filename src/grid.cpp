@@ -37,7 +37,7 @@ size_t& Grid<dim>::GetChunkPopulation(const Position<dim>& chunkPos, size_t spec
 
 template <size_t dim>
 size_t Grid<dim>::GetChunkPopulation(const Position<dim>& chunkPos) const {
-    return Chunks[GetOffset(chunkPos)].coords.size();
+    return Chunks[GetOffset(chunkPos)].GetPopulation();
 }
 
 template <size_t dim>

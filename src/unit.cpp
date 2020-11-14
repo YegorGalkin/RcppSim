@@ -2,17 +2,17 @@
 
 template <size_t dim>
 const Coord<dim>& Unit<dim>::Coord() const {
-    return chunk.coords[i];
+    return chunk.GetCoord(i);
 }
 
 template <size_t dim>
 double& Unit<dim>::DeathRate() {
-    return chunk.deathRate[i];
+    return chunk.GetDeathRate(i);
 }
 
 template <size_t dim>
 size_t Unit<dim>::Species() const {
-    return chunk.species[i];
+    return chunk.GetSpecies(i);
 }
 
 template <size_t dim>

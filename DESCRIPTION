@@ -1,7 +1,7 @@
 Package: MathBioSim
 Type: Package
 Title: Spatial discrete birth-death process simulator
-Version: 2.0.9
+Version: 2.1.7
 Date: 2020-01-06
 Author: Egor Galkin
 Maintainer: Your Name <your@email.com>
@@ -17,6 +17,7 @@ LinkingTo:
   devtools
 RcppModules:
   poisson_1d_module,
+  poisson_1d_kernel_module,
   poisson_2d_module,
   poisson_3d_module
 SystemRequirements: C++11

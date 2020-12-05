@@ -1,16 +1,17 @@
 # Assuming everything is installed
 library(pacman)
-p_load(tidyverse, future, promises, listenv, fOptions)
+p_load(tidyverse, future, promises, listenv, fOptions, feather)
 library(MathBioSim)
 
 #
-summary_prev = 'D:/Rstuff/mathbio/MathBioSim/14_10_2020_sims_2d/summary.csv'
+summary_prev = 'D:/Rstuff/mathbio/MBSruns/14_10_2020_sims_2d_iter2/summary.csv'
 summary_prev = read_csv(summary_prev)
   
 # Prepare directory for results
-result_dir = './14_10_2020_sims_2d_iter2/'
+result_dir = 'D:/Rstuff/mathbio/MBSruns/14_10_2020_sims_2d_iter3/'
 dir.create(result_dir, showWarnings = FALSE)
 dir.create(paste0(result_dir,"pop/"), showWarnings = FALSE)
+dir.create(paste0(result_dir,"coords/"), showWarnings = FALSE)
 
 # Multiprocessing at simulation run level - single process for single parameter set
 plan(multiprocess)
@@ -21,19 +22,19 @@ n_dim=2
 # Check params_all
 
 # We iterate over previous simulation run to get desired amount of individuals
-desired_population=2500
+desired_population=5000
 
 params_all <- summary_prev%>%
   dplyr::filter(average_pop<desired_population)%>%
   dplyr::select(id,comp_strength,comp_width,N)%>%
   mutate(b=1,d=0,sm=1,sw=comp_width)%>%
   mutate(dd=comp_strength*(sw*sw*2*pi)^(n_dim/2))%>%
-  mutate(kernel_trim = 3, spline_precision = 1e-9, spline_nodes=1001L)%>%
+  mutate(kernel_trim = 5, spline_precision = 1e-9, spline_nodes=1001L)%>%
   mutate(death_kernel_r=kernel_trim*sw,birth_kernel_r=kernel_trim*sm)%>%
   mutate(seed=1234L)%>%
   mutate(initial_population = desired_population, population_limit = 1e5L)%>%
   mutate(area_length_x=(desired_population/N)^(1/n_dim),periodic=TRUE,cell_count_x=10L)%>%
-  mutate(n_samples = 100L)
+  mutate(n_samples = 200L)
 
 mv_normal_radius<-function(r,sd,n_dim){
   1/(2*pi*sd*sd)^(n_dim/2)*exp(-r^2/(2*sd^2))
@@ -89,9 +90,13 @@ for (i in setdiff(params_all$id,params_done)%>%.[sample(length(.))]) {
       time<-numeric(params$n_samples)
       pop<-numeric(params$n_samples)
       pop_cap_reached<-numeric(params$n_samples)
+      pattern<-list()
       
       for(j in 1:params$n_samples){
         sim$run_events(sim$total_population)
+        pattern[[j]]=data.frame(time_point=j,
+                                x=sim$get_all_x_coordinates(),
+                                y=sim$get_all_y_coordinates())
         pop[j]=sim$total_population
         time[j]=sim$time
         cap_reached=sim$pop_cap_reached
@@ -100,6 +105,8 @@ for (i in setdiff(params_all$id,params_done)%>%.[sample(length(.))]) {
       pops<-data.frame(id=i,time=time,pop=pop,cap_reached=cap_reached)
       
       write_csv(pops,paste0(result_dir,"pop/",i,".csv"))
+      bind_rows(pattern)%>%
+        write_feather(paste0(result_dir,"coords/",i,".feather"))
     }
 }
 
@@ -117,7 +124,7 @@ summary_results <-
   read_csv(paste0(result_dir,"pop.csv"))%>%
   group_by(id)%>%
   arrange(id,time)%>%
-  slice_tail(prop=0.8)%>%
+  tail(-50)%>%
   summarise(average_pop=mean(pop),cap_reached=any(cap_reached))%>%
   left_join(params_all%>%select(id,area_length_x,comp_strength,comp_width))%>%
   mutate(N = average_pop / area_length_x^n_dim)%>%

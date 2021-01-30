@@ -13,13 +13,37 @@ size_t Grid<1>::GetOffset(const Position<1>& pos) const {
 }
 
 template<>
+Position<1> Grid<1>::GetPositionByOffset(size_t offset) const {
+    return {
+        offset
+    };
+}
+
+template<>
 size_t Grid<2>::GetOffset(const Position<2>& pos) const {
     return pos[0] * CellCounts[1] + pos[1];
 }
 
 template<>
+Position<2> Grid<2>::GetPositionByOffset(size_t offset) const {
+    return {
+        offset / CellCounts[1],
+        offset % CellCounts[1]
+    };
+}
+
+template<>
 size_t Grid<3>::GetOffset(const Position<3>& pos) const {
     return (pos[0] * CellCounts[1] + pos[1]) * CellCounts[2] + pos[2];
+}
+
+template<>
+Position<3> Grid<3>::GetPositionByOffset(size_t offset) const {
+    return {
+        (offset / CellCounts[2]) / CellCounts[1],
+        (offset / CellCounts[2]) % CellCounts[1],
+        offset % CellCounts[2]
+    };
 }
 
 template <size_t dim>
@@ -151,6 +175,17 @@ Range<UnitIterator<dim>> Grid<dim>::GetLocalUnits(const Unit<dim>& unit) {
             /* isEnd = */ true
         )
     };
+}
+
+template <size_t dim>
+void Grid<dim>::KillRandom() {
+    size_t chunkIndex = boost::random::discrete_distribution<>(ChunkDeathRate)(Rnd);
+    auto chunkPosition = GetPositionByOffset(chunkIndex);
+    auto& chunk = GetChunk(chunkPosition);
+    size_t unitIndex = boost::random::discrete_distribution<>(chunk.GetDeathRates())(Rnd);
+    auto unit = Unit<dim>(*this, chunkPosition, unitIndex);
+    
+    RemoveUnit(unit);
 }
 
 template class Grid<1>;

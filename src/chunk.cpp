@@ -44,6 +44,10 @@ void Chunk<dim>::RemoveUnit(size_t i) {
     Species.pop_back();
 }
 
+template <size_t dim>
+const std::vector<double>& Chunk<dim>::GetDeathRates() const {
+    return DeathRate;
+}
 
 template class Chunk<1>;
 template class Chunk<2>;

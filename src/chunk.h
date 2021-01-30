@@ -14,6 +14,7 @@ public:
     Unit<dim>& AddUnit(Grid<dim>& grid, Position<dim> chunkPosition, Coord<dim>& coord, size_t species);
     size_t GetPopulation() const;
     double& GetDeathRate(size_t i);
+    const std::vector<double>& GetDeathRates() const;
     size_t GetSpecies(size_t i) const;
     const Coord<dim>& GetCoord(size_t i) const;
     void RemoveUnit(size_t i);

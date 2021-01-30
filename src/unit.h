@@ -28,6 +28,8 @@ public:
     size_t ChunkPopulation() const;
     const Position<dim>& ChunkPosition() const;
     
+    void RemoveUnit();
+    
     bool operator==(const Unit<dim>& other) const;
     bool operator!=(const Unit<dim>& other) const;
 };

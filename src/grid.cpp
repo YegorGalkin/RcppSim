@@ -1,6 +1,9 @@
 #include "grid.h"
 
 #include <algorithm>
+#include <cmath>
+
+#include <boost/random.hpp>
 
 using boost::irange;
 
@@ -49,25 +52,37 @@ size_t Grid<dim>::GetCellCount(size_t i) const {
     return CellCounts[i];
 }
 
-template <size_t dim>
-void Grid<dim>::AddInteraction(Unit<dim>& unit, double interaction) {
-    unit.DeathRate() += interaction;
-    unit.ChunkDeathRate() += interaction;
-    TotalDeathRate[ModelParameters.SpeciesCount] += interaction;
+void FixDoubleZero(double& x, double epsilon = 1e-10) {
+    if (std::abs(x) < epsilon) {
+        x = 0;
+    }
 }
 
 template <size_t dim>
-void Grid<dim>::AddInteraction(Unit<dim>& a, Unit<dim>& b) {
-    auto interaction = ModelParameters.GetInteraction(
-        a.Species(),
-        b.Species(),
-        Area.Ro(a, b)
-    );
-    if (interaction < 0) {
-        return;
+void Grid<dim>::AddInteraction(Unit<dim>& unit, double interaction) {
+    unit.DeathRate() += interaction;
+    FixDoubleZero(unit.DeathRate());
+    
+    unit.ChunkDeathRate() += interaction;
+    FixDoubleZero(unit.ChunkDeathRate());
+    
+    TotalDeathRate[unit.Species()] += interaction;
+    FixDoubleZero(TotalDeathRate[unit.Species()]);
+}
+
+template <size_t dim>
+void Grid<dim>::AddInteraction(Unit<dim>& a, Unit<dim>& b, bool isSub) {
+    auto ro = Area.Ro(a, b);
+    auto aS = a.Species();
+    auto bS = b.Species();
+    if (auto interaction = ModelParameters.GetInteraction(aS, bS, ro) >= 0) {
+        interaction = isSub ? -interaction : interaction;
+        AddInteraction(b, interaction);
     }
-    AddInteraction(a, interaction);
-    AddInteraction(b, interaction);
+    if (auto interaction = ModelParameters.GetInteraction(bS, aS, ro) >= 0) {
+        interaction = isSub ? -interaction : interaction;
+        AddInteraction(a, interaction);
+    }
 }
 
 template <size_t dim>
@@ -96,10 +111,24 @@ bool Grid<dim>::AddUnit(Coord<dim> coord, size_t species) {
     
     for (auto unit : GetLocalUnits(newUnit)) {
         if (newUnit != unit) {
-            AddInteraction(newUnit, unit);
+            AddInteraction(newUnit, unit, false);
         }
     }
     return true;
+}
+
+template <size_t dim>
+void Grid<dim>::RemoveUnit(Unit<dim>& unit) {
+    --TotalPopulation[unit.Species()];
+    SubDeathRate(unit);
+    
+    for (auto other : GetLocalUnits(unit)) {
+        if (unit != other) {
+            AddInteraction(unit, other, true);
+        }
+    }
+    
+    unit.RemoveUnit();
 }
 
 template <size_t dim>

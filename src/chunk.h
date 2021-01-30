@@ -16,4 +16,5 @@ public:
     double& GetDeathRate(size_t i);
     size_t GetSpecies(size_t i) const;
     const Coord<dim>& GetCoord(size_t i) const;
+    void RemoveUnit(size_t i);
 };

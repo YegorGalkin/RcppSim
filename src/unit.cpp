@@ -50,6 +50,11 @@ const Position<dim>& Unit<dim>::ChunkPosition() const {
     return chunkPos;
 }
 
+template <size_t dim>
+void Unit<dim>::RemoveUnit() {
+    chunk.RemoveUnit(i);
+}
+
 template class Unit<1>;
 template class Unit<2>;
 template class Unit<3>;

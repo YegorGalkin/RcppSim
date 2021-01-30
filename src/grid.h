@@ -30,7 +30,7 @@ private:
     size_t GetOffset(const Position<dim>& pos, size_t species) const;
     
     void AddInteraction(Unit<dim>& a, double interaction);
-    void AddInteraction(Unit<dim>& a, Unit<dim>& b);
+    void AddInteraction(Unit<dim>& a, Unit<dim>& b, bool isSub);
     
     void AddDeathRate(Unit<dim>& a);
     void SubDeathRate(Unit<dim>& a);
@@ -39,6 +39,7 @@ private:
     
 public:
     bool AddUnit(Coord<dim> coord, size_t species); // return if unit added
+    void RemoveUnit(Unit<dim>& unit);
 
     Chunk<dim>& GetChunk(const Position<dim>& chunkPos);
     double& GetChunkDeathRate(const Position<dim>& chunkPos, size_t species);

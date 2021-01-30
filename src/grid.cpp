@@ -178,11 +178,17 @@ Range<UnitIterator<dim>> Grid<dim>::GetLocalUnits(const Unit<dim>& unit) {
 }
 
 template <size_t dim>
-void Grid<dim>::KillRandom() {
-    size_t chunkIndex = boost::random::discrete_distribution<>(ChunkDeathRate)(Rnd);
+void Grid<dim>::KillRandom(size_t species) {
+    size_t chunkIndex = boost::random::discrete_distribution<>(ChunkDeathRate[species])(Rnd);
     auto chunkPosition = GetPositionByOffset(chunkIndex);
     auto& chunk = GetChunk(chunkPosition);
-    size_t unitIndex = boost::random::discrete_distribution<>(chunk.GetDeathRates())(Rnd);
+    std::vector<double> chunkDeathRateTmp = chunk.GetDeathRates();
+    for (size_t i = 0; i < chunk.GetPopulation(); ++i) {
+        if (chunk.GetSpecies(i) != species) {
+            chunkDeathRateTmp[i] = 0;
+        }
+    }
+    size_t unitIndex = boost::random::discrete_distribution<>(chunkDeathRateTmp)(Rnd);
     auto unit = Unit<dim>(*this, chunkPosition, unitIndex);
     
     RemoveUnit(unit);

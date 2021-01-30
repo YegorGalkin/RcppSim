@@ -14,8 +14,8 @@
 template <size_t dim>
 class Grid {
     std::vector<Chunk<dim>> Chunks;
-    std::vector<double> ChunkDeathRate;
-    std::vector<size_t> ChunkPopulation;
+    std::vector<std::vector<double>> ChunkDeathRate;
+    std::vector<std::vector<size_t>> ChunkPopulation;
     
     Position<dim> CellCounts;
     Position<dim> LocalRadius;
@@ -47,7 +47,7 @@ public:
     bool AddUnit(Coord<dim> coord, size_t species); // return if unit added
     void RemoveUnit(Unit<dim>& unit);
     
-    void KillRandom();
+    void KillRandom(size_t species);
 
     Chunk<dim>& GetChunk(const Position<dim>& chunkPos);
     double& GetChunkDeathRate(const Position<dim>& chunkPos, size_t species);

@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <boost/random/lagged_fibonacci.hpp>
+#include <boost/math/interpolators/cubic_b_spline.hpp>
 
 #include "defines.h"
 #include "area.h"
@@ -24,6 +25,10 @@ class Grid {
     std::vector<size_t> TotalPopulation;
     
     boost::random::lagged_fibonacci2281 Rnd;
+    
+    std::vector<boost::math::cubic_b_spline<double>> BirthReverseCdfSpline;
+    
+    size_t EventCount;
 
 public:
     const Area<dim> Area;
@@ -32,6 +37,9 @@ public:
 private:
     size_t GetOffset(const Position<dim>& pos) const;
     size_t GetOffset(const Position<dim>& pos, size_t species) const;
+    
+    template<class T>
+    Position<dim> GetRandomDistribution(const std::vector<T>& dist);
     
     Position<dim> GetPositionByOffset(size_t offset) const;
     
@@ -48,6 +56,7 @@ public:
     void RemoveUnit(Unit<dim>& unit);
     
     void KillRandom(size_t species);
+    void SpawnRandom(size_t species);
 
     Chunk<dim>& GetChunk(const Position<dim>& chunkPos);
     double& GetChunkDeathRate(const Position<dim>& chunkPos, size_t species);

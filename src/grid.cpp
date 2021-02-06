@@ -58,12 +58,12 @@ Chunk<dim>& Grid<dim>::GetChunk(const Position<dim>& chunkPos) {
 
 template <size_t dim>
 double& Grid<dim>::GetChunkDeathRate(const Position<dim>& chunkPos, size_t species) {
-    return ChunkDeathRate[GetOffset(chunkPos, species)];
+    return ChunkDeathRate[species][GetOffset(chunkPos)];
 }
 
 template <size_t dim>
 size_t& Grid<dim>::GetChunkPopulation(const Position<dim>& chunkPos, size_t species) {
-    return ChunkPopulation[GetOffset(chunkPos, species)];
+    return ChunkPopulation[species][GetOffset(chunkPos)];
 }
 
 template <size_t dim>
@@ -178,9 +178,16 @@ Range<UnitIterator<dim>> Grid<dim>::GetLocalUnits(const Unit<dim>& unit) {
 }
 
 template <size_t dim>
+template <class T>
+Position<dim> Grid<dim>::GetRandomDistribution(const std::vector<T>& dist) {
+    size_t index = boost::random::discrete_distribution<>(dist)(Rnd);
+    return GetPositionByOffset(index);
+}
+
+
+template <size_t dim>
 void Grid<dim>::KillRandom(size_t species) {
-    size_t chunkIndex = boost::random::discrete_distribution<>(ChunkDeathRate[species])(Rnd);
-    auto chunkPosition = GetPositionByOffset(chunkIndex);
+    auto chunkPosition = GetRandomDistribution(ChunkDeathRate[species]);
     auto& chunk = GetChunk(chunkPosition);
     std::vector<double> chunkDeathRateTmp = chunk.GetDeathRates();
     for (size_t i = 0; i < chunk.GetPopulation(); ++i) {
@@ -192,6 +199,38 @@ void Grid<dim>::KillRandom(size_t species) {
     auto unit = Unit<dim>(*this, chunkPosition, unitIndex);
     
     RemoveUnit(unit);
+}
+
+template <size_t dim>
+void Grid<dim>::SpawnRandom(size_t species) {
+    auto chunkPosition = GetRandomDistribution(ChunkPopulation[species]);
+    auto chunk = GetChunk(chunkPosition);
+    
+    size_t eventIndex = boost::random::uniform_smallint<>(
+        1,
+        chunk.GetPopulation()
+    )(Rnd);
+    for (size_t i = 0; ; ++i) {
+        if (chunk.GetSpecies(i) == species) {
+            --eventIndex;
+        }
+        if (eventIndex == 0) {
+            eventIndex = i;
+            break;
+        }
+    }
+    
+    auto parentUnit = Unit<dim>(*this, chunkPosition, eventIndex);
+    const auto oldCoord = parentUnit.Coord();
+    Coord<dim> newCoord;
+    for (size_t i = 0; i < dim; ++i) {
+        newCoord[i] = oldCoord[i] + BirthReverseCdfSpline[species](
+            boost::random::uniform_01<>()(Rnd)
+        ) * (
+            boost::random::bernoulli_distribution<>(0.5)(Rnd) * 2 - 1
+        );
+    }
+    AddUnit(newCoord, species);
 }
 
 template class Grid<1>;

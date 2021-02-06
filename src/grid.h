@@ -57,10 +57,13 @@ public:
     
     void KillRandom(size_t species);
     void SpawnRandom(size_t species);
+    
+    void MakeEvent();
 
     Chunk<dim>& GetChunk(const Position<dim>& chunkPos);
     double& GetChunkDeathRate(const Position<dim>& chunkPos, size_t species);
     size_t& GetChunkPopulation(const Position<dim>& chunkPos, size_t species);
     size_t GetChunkPopulation(const Position<dim>& chunkPos) const;
     size_t GetCellCount(size_t i) const;
+    size_t GetAllPopulation() const;
 };

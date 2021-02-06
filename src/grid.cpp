@@ -233,6 +233,41 @@ void Grid<dim>::SpawnRandom(size_t species) {
     AddUnit(newCoord, species);
 }
 
+template <size_t dim>
+void Grid<dim>::MakeEvent() {
+    if (GetAllPopulation()) {
+        return;
+    }
+    
+    ++EventCount;
+    
+    //Rolling event according to global birth \ death rate
+    std::vector<double> dis(ModelParameters.SpeciesCount * 2, 0);
+    for (auto s : ModelParameters.IterSpecies()) {
+        if (TotalPopulation[s] > 0) {
+            dis[2 * s + 0] = TotalDeathRate[s];
+            dis[2 * s + 1] = TotalPopulation[s] * ModelParameters.GetD(s);
+        }
+    }
+    auto t = boost::random::discrete_distribution<>(dis)(Rnd);
+    size_t event = t % 2;
+    size_t species = t / 2;
+    if (event == 0) {
+        KillRandom(species);
+    } else {
+        SpawnRandom(species);
+    }
+}
+
+template <size_t dim>
+size_t Grid<dim>::GetAllPopulation() const {
+    size_t res = 0;
+    for (auto x : TotalPopulation) {
+        res += x;
+    }
+    return res;
+}
+
 template class Grid<1>;
 template class Grid<2>;
 template class Grid<3>;

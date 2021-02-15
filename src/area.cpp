@@ -7,14 +7,9 @@
 
 using boost::irange;
 
-template<> std::string Area<1>::GetName(const std::string& name, size_t i) {
-    return name;
-}
-
 const std::string AREA_RENAME[] = {"x", "y", "z"};
 
-template <size_t dim>
-std::string Area<dim>::GetName(const std::string& name, size_t i) {
+std::string GetAreaName(const std::string& name, size_t i) {
     return name + "_" + AREA_RENAME[i];
 }
 
@@ -106,6 +101,11 @@ double Area<3>::Ro(const Coord<3>& a, const Coord<3>& b) {
         std::pow(a[1] - b[1], 2) +
         std::pow(a[2] - b[2], 2)
     );
+}
+
+template<size_t dim>
+const Coord<dim>& Area<dim>::GetAreaLength() const {
+    return AreaLength;
 }
 
 template class Area<1>;

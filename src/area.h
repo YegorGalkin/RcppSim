@@ -7,6 +7,8 @@
 #include "unit.h"
 #include "grid.h"
 
+std::string GetAreaName(const std::string& name, size_t i);
+
 template <size_t dim>
 class Area {
     Coord<dim> AreaLength;
@@ -17,7 +19,7 @@ public:
         : IsPeriodic(Rcpp::as<bool>(params["periodic"]))
     {
         for (size_t i = 0; i < dim; ++i) {
-            AreaLength[i] = Rcpp::as<double>(params[GetName("area_length", i)]);
+            AreaLength[i] = Rcpp::as<double>(params[GetAreaName("area_length", i)]);
         }
     }
 
@@ -28,7 +30,5 @@ public:
     bool GetIsPeriodic() const;
     void FixCoord(Coord<dim>& coord) const;
     Position<dim> GetCellIndex(const Position<dim>& cellCounts, const Coord<dim>& coord) const;
-    
-private:
-    std::string GetName(const std::string& name, size_t i);
+    const Coord<dim>& GetAreaLength() const;
 };

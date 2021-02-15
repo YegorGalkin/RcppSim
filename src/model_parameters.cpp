@@ -105,8 +105,8 @@ ModelParameters::ModelParameters(const Rcpp::List& params) : SpeciesCount(1) {
             auto offset = GetOffset(i, j);
             DD[offset] = Rcpp::as<double>(params[GetName("dd", i, j)]);
             
-            auto deathKernelY = Rcpp::as<std::vector<double>>(params[GetName("death_kernel_y", i)]);
-            auto deathKernelCutoff = Rcpp::as<double>(params[GetName("death_kernel_r", i)]);
+            auto deathKernelY = Rcpp::as<std::vector<double>>(params[GetName("death_kernel_y", i, j)]);
+            auto deathKernelCutoff = Rcpp::as<double>(params[GetName("death_kernel_r", i, j)]);
             DeathKernel[offset] = GetSpline(deathKernelY, deathKernelCutoff);
             DeathCutoff[offset] = deathKernelCutoff;
         }
@@ -148,6 +148,10 @@ double ModelParameters::GetD(size_t species) const {
     return D[species];
 }
 
+const boost::math::cubic_b_spline<double>& ModelParameters::GetBirthSpline(size_t species) const {
+    return BirthReverseKernel[species];
+}
+
 std::string ModelParameters::GetName(const std::string& name, size_t i) const {
     if (SpeciesCount == 1) {
         return name;
@@ -160,4 +164,14 @@ std::string ModelParameters::GetName(const std::string& name, size_t i, size_t j
         return name;
     }
     return name + "_" + std::to_string(i + 1) + "_" + std::to_string(j + 1);
+}
+
+double ModelParameters::GetMaximumCutoff() const {
+    double cutoff = 0;
+    for (auto i : IterSpecies()) {
+        for (auto j : IterSpecies()) {
+            cutoff = std::max(cutoff, GetCutoff(i, j));
+        }
+    }
+    return cutoff;
 }

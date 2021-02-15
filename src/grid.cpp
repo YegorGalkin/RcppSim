@@ -224,7 +224,7 @@ void Grid<dim>::SpawnRandom(size_t species) {
     const auto oldCoord = parentUnit.Coord();
     Coord<dim> newCoord;
     for (size_t i = 0; i < dim; ++i) {
-        newCoord[i] = oldCoord[i] + BirthReverseCdfSpline[species](
+        newCoord[i] = oldCoord[i] + ModelParameters.GetBirthSpline(species)(
             boost::random::uniform_01<>()(Rnd)
         ) * (
             boost::random::bernoulli_distribution<>(0.5)(Rnd) * 2 - 1
@@ -266,6 +266,58 @@ size_t Grid<dim>::GetAllPopulation() const {
         res += x;
     }
     return res;
+}
+
+template <size_t dim>
+void Grid<dim>::FillCelsParameters(const Rcpp::List& params) {
+    double cutoff = ModelParameters.GetMaximumCutoff();
+    auto areaLength = Area.GetAreaLength();
+    size_t chunkCount = 0;
+    for (size_t i = 0; i < dim; ++i) {
+        CellCounts[i] = Rcpp::as<size_t>(params[GetAreaName("cell_count", i)]);
+        LocalRadius[i] = std::max<size_t>(
+            1,
+            static_cast<size_t>(std::ceil(cutoff / (areaLength[i] / CellCounts[i])))
+        );
+        chunkCount *= CellCounts[i];
+    }
+
+    Chunks = std::vector<Chunk<dim>>(chunkCount);
+    ChunkDeathRate = std::vector<std::vector<double>>(ModelParameters.SpeciesCount);
+    ChunkPopulation = std::vector<std::vector<size_t>>(ModelParameters.SpeciesCount);
+    for (auto i : ModelParameters.IterSpecies()) {
+        ChunkDeathRate[i] = std::vector<double>(chunkCount, 0);
+        ChunkPopulation[i] = std::vector<size_t>(chunkCount, 0);
+    }
+}
+
+constexpr auto INITIAL_SPECIES = "initial_population_species";
+
+template <size_t dim>
+void Grid<dim>::InitializePopulation(const Rcpp::List& params) {
+    std::array<std::vector<double>, dim> coords;
+    for (auto i : irange(dim)) {
+        coords[i] = Rcpp::as <std::vector<double>>(params[GetAreaName("initial_population", i)]);
+    }
+    auto size = coords[0].size();
+    std::vector<size_t> species;
+    if (params.hasSlot(INITIAL_SPECIES)) {
+        species = Rcpp::as<std::vector<size_t>>(params[INITIAL_SPECIES]);
+    } else {
+        species = std::vector<size_t>(size, 0);
+    }
+    for (auto i : irange(size)) {
+        auto coord = Coord<dim>();
+        for (auto j : irange(dim)) {
+            coord[j] = coords[j][i];
+        }
+        AddUnit(coord, species[i]);
+    }
+}
+
+template <size_t dim>
+const std::vector<size_t> Grid<dim>::GetTotalPopulation() const {
+    return TotalPopulation;
 }
 
 template class Grid<1>;

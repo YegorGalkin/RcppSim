@@ -12,6 +12,8 @@
 #include "unit.h"
 #include "iterator.h"
 
+std::string GetAreaName(const std::string& name, size_t i);
+
 template <size_t dim>
 class Grid {
     std::vector<Chunk<dim>> Chunks;
@@ -26,15 +28,26 @@ class Grid {
     
     boost::random::lagged_fibonacci2281 Rnd;
     
-    std::vector<boost::math::cubic_b_spline<double>> BirthReverseCdfSpline;
-    
     size_t EventCount;
 
 public:
     const Area<dim> Area;
     const ModelParameters ModelParameters;
+    
+public:
+    Grid(const Rcpp::List& params)
+        : EventCount(0)
+        , Area(params)
+        , ModelParameters(params)
+    {
+        FillCelsParameters(params);
+        InitializePopulation(params);
+    }
 
 private:
+    void FillCelsParameters(const Rcpp::List& params);
+    void InitializePopulation(const Rcpp::List& params);
+    
     size_t GetOffset(const Position<dim>& pos) const;
     size_t GetOffset(const Position<dim>& pos, size_t species) const;
     
@@ -52,6 +65,7 @@ private:
     Range<UnitIterator<dim>> GetLocalUnits(const Unit<dim>& unit);
     
 public:
+    
     bool AddUnit(Coord<dim> coord, size_t species); // return if unit added
     void RemoveUnit(Unit<dim>& unit);
     
@@ -66,4 +80,5 @@ public:
     size_t GetChunkPopulation(const Position<dim>& chunkPos) const;
     size_t GetCellCount(size_t i) const;
     size_t GetAllPopulation() const;
+    const std::vector<size_t> GetTotalPopulation() const;
 };

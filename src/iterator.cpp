@@ -57,14 +57,16 @@ void UnitIterator<dim>::Next() {
         return;
     }
     ++i;
-    if (i == grid.GetChunkPopulation(pos)) {
+    if (i >= grid.GetChunkPopulation(GetPosition())) {
         i = 0;
         for (size_t j = 0; j != dim; ++j) {
             ++pos[j];
             if (pos[j] < end[j]) {
                 break;
             }
-            pos[j] = 0;
+            if (j != dim - 1) {
+                pos[j] = 0;
+            }
         }
     }
     if (IsEnd()) {
@@ -79,7 +81,7 @@ void UnitIterator<dim>::operator++() {
     }
     do {
         Next();
-    } while (!isEnd && grid.GetChunkPopulation(pos) == 0);
+    } while (!isEnd && grid.GetChunkPopulation(GetPosition()) == 0);
 }
 
 template <size_t dim>
@@ -91,8 +93,10 @@ bool UnitIterator<dim>::operator==(const UnitIterator<dim>& other) const {
         if (i != other.i) {
             return false;
         }
+        auto a = GetPosition();
+        auto b = other.GetPosition();
         for (size_t j = 0; j < dim; ++j) {
-            if (pos[j] != other.pos[j]) {
+            if (a[j] != b[j]) {
                 return false;
             }
         }

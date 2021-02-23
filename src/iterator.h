@@ -52,7 +52,7 @@ public:
         , isEnd(isEnd)
     {
         FixPositions();
-        if (!IsEnd() && grid.GetChunkPopulation(pos) == 0) {
+        if (!IsEnd() && grid.GetChunkPopulation(GetPosition()) == 0) {
             this->operator++();
         }
     }

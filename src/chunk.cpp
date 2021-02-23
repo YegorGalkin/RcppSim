@@ -3,12 +3,17 @@
 #include "unit.h"
 
 template <size_t dim>
-Unit<dim>& Chunk<dim>::AddUnit(Grid<dim>& grid, Position<dim> chunkPosition, Coord<dim>& coord, size_t species) {
+Unit<dim> Chunk<dim>::AddUnit(Grid<dim>& grid, Position<dim> chunkPosition, Coord<dim>& coord, size_t species) {
     const auto i = Coords.size();
     
     Coords.push_back(coord);
     DeathRate.push_back(0.0);
     Species.push_back(species);
+    return Unit<dim>(
+        grid,
+        chunkPosition,
+        i
+    );
 }
 
 template <size_t dim>

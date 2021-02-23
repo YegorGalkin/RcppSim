@@ -11,7 +11,7 @@ class Chunk {
     std::vector<size_t> Species;
 
 public:
-    Unit<dim>& AddUnit(Grid<dim>& grid, Position<dim> chunkPosition, Coord<dim>& coord, size_t species);
+    Unit<dim> AddUnit(Grid<dim>& grid, Position<dim> chunkPosition, Coord<dim>& coord, size_t species);
     size_t GetPopulation() const;
     double& GetDeathRate(size_t i);
     const std::vector<double>& GetDeathRates() const;

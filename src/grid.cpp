@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <exception>
 
 #include <boost/random.hpp>
 
@@ -53,21 +54,39 @@ size_t Grid<dim>::GetOffset(const Position<dim>& pos, size_t species) const {
 
 template <size_t dim>
 Chunk<dim>& Grid<dim>::GetChunk(const Position<dim>& chunkPos) {
+    if (GetOffset(chunkPos) >= Chunks.size()) {
+        throw std::runtime_error("InvalidChunkSize: " + std::to_string(GetOffset(chunkPos)) + " >= " + std::to_string(Chunks.size()));
+    }
     return Chunks[GetOffset(chunkPos)];
 }
 
 template <size_t dim>
 double& Grid<dim>::GetChunkDeathRate(const Position<dim>& chunkPos, size_t species) {
+    if (species >= ChunkDeathRate.size()) {
+        throw std::runtime_error("Invalid species in " + std::string(__PRETTY_FUNCTION__));
+    }
+    if (GetOffset(chunkPos) >= Chunks.size()) {
+        throw std::runtime_error("InvalidChunkSize: " + std::to_string(GetOffset(chunkPos)) + " >= " + std::to_string(Chunks.size()));
+    }
     return ChunkDeathRate[species][GetOffset(chunkPos)];
 }
 
 template <size_t dim>
 size_t& Grid<dim>::GetChunkPopulation(const Position<dim>& chunkPos, size_t species) {
+    if (species >= ChunkPopulation.size()) {
+        throw std::runtime_error("Invalid species in " + std::string(__PRETTY_FUNCTION__));
+    }
+    if (GetOffset(chunkPos) >= Chunks.size()) {
+        throw std::runtime_error("InvalidChunkSize: " + std::to_string(GetOffset(chunkPos)) + " >= " + std::to_string(Chunks.size()));
+    }
     return ChunkPopulation[species][GetOffset(chunkPos)];
 }
 
 template <size_t dim>
 size_t Grid<dim>::GetChunkPopulation(const Position<dim>& chunkPos) const {
+    if (GetOffset(chunkPos) >= Chunks.size()) {
+        throw std::runtime_error("InvalidChunkSize: " + std::to_string(GetOffset(chunkPos)) + " >= " + std::to_string(Chunks.size()));
+    }
     return Chunks[GetOffset(chunkPos)].GetPopulation();
 }
 
@@ -90,6 +109,9 @@ void Grid<dim>::AddInteraction(Unit<dim>& unit, double interaction) {
     unit.ChunkDeathRate() += interaction;
     FixDoubleZero(unit.ChunkDeathRate());
     
+    if (unit.Species() >= TotalDeathRate.size()) {
+        throw std::runtime_error("Invalid species in " + std::string(__PRETTY_FUNCTION__));
+    }
     TotalDeathRate[unit.Species()] += interaction;
     FixDoubleZero(TotalDeathRate[unit.Species()]);
 }
@@ -128,7 +150,7 @@ bool Grid<dim>::AddUnit(Coord<dim> coord, size_t species) {
     
     auto pos = Area.GetCellIndex(CellCounts, coord);
     auto& chunk = GetChunk(pos);
-    auto& newUnit = chunk.AddUnit(*this, pos, coord, species);
+    auto newUnit = chunk.AddUnit(*this, pos, coord, species);
     
     ++TotalPopulation[species];
     AddDeathRate(newUnit);
@@ -158,10 +180,10 @@ void Grid<dim>::RemoveUnit(Unit<dim>& unit) {
 template <size_t dim>
 Range<UnitIterator<dim>> Grid<dim>::GetLocalUnits(const Unit<dim>& unit) {
     Position<dim> startPos, endPos;
-    const auto& unitCoord = unit.Coord();
+    const auto& unitPos = unit.ChunkPosition();
     for (auto i : irange(dim)) {
-        startPos[i] = unitCoord[i] - LocalRadius[i];
-        endPos[i] = unitCoord[i] + LocalRadius[i];
+        startPos[i] = unitPos[i] - LocalRadius[i];
+        endPos[i] = unitPos[i] + LocalRadius[i];
     }
     return {
         UnitIterator<dim>(
@@ -279,7 +301,11 @@ void Grid<dim>::FillCelsParameters(const Rcpp::List& params) {
             1,
             static_cast<size_t>(std::ceil(cutoff / (areaLength[i] / CellCounts[i])))
         );
-        chunkCount *= CellCounts[i];
+        if (chunkCount == 0) {
+            chunkCount = CellCounts[i];
+        } else {
+            chunkCount *= CellCounts[i];
+        }
     }
 
     Chunks = std::vector<Chunk<dim>>(chunkCount);
@@ -289,6 +315,8 @@ void Grid<dim>::FillCelsParameters(const Rcpp::List& params) {
         ChunkDeathRate[i] = std::vector<double>(chunkCount, 0);
         ChunkPopulation[i] = std::vector<size_t>(chunkCount, 0);
     }
+    TotalDeathRate = std::vector<double>(ModelParameters.SpeciesCount, 0);
+    TotalPopulation = std::vector<size_t>(ModelParameters.SpeciesCount, 0);
 }
 
 constexpr auto INITIAL_SPECIES = "initial_population_species";
@@ -299,13 +327,21 @@ void Grid<dim>::InitializePopulation(const Rcpp::List& params) {
     for (auto i : irange(dim)) {
         coords[i] = Rcpp::as <std::vector<double>>(params[GetAreaName("initial_population", i)]);
     }
-    auto size = coords[0].size();
-    std::vector<size_t> species;
-    if (params.hasSlot(INITIAL_SPECIES)) {
+    
+    const auto size = coords[0].size();
+    std::vector<size_t> species(size, 0);
+    if (params.containsElementNamed(INITIAL_SPECIES)) {
         species = Rcpp::as<std::vector<size_t>>(params[INITIAL_SPECIES]);
-    } else {
-        species = std::vector<size_t>(size, 0);
     }
+    for (auto i : irange(dim)) {
+        if (coords[i].size() != size) {
+            throw std::runtime_error(GetAreaName("initial_population", i) + ".size != " + GetAreaName("initial_population", 0) + ".size");
+        }
+    }
+    if (species.size() != size) {
+        throw std::runtime_error(std::string(INITIAL_SPECIES) + ".size != " + GetAreaName("initial_population", 0) + ".size");
+    }
+    
     for (auto i : irange(size)) {
         auto coord = Coord<dim>();
         for (auto j : irange(dim)) {

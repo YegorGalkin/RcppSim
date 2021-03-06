@@ -36,7 +36,8 @@ public:
     
 public:
     Grid(const Rcpp::List& params)
-        : EventCount(0)
+        : Rnd(GetParameter<uint32_t>(params, "seed", 42))
+        , EventCount(0)
         , Area(params)
         , ModelParameters(params)
     {
@@ -73,6 +74,7 @@ public:
     void SpawnRandom(size_t species);
     
     void MakeEvent();
+    void RunEvents(size_t count);
 
     Chunk<dim>& GetChunk(const Position<dim>& chunkPos);
     double& GetChunkDeathRate(const Position<dim>& chunkPos, size_t species);

@@ -63,6 +63,9 @@ boost::integer_range<size_t> ModelParameters::IterSpecies() const {
 }
 
 inline size_t ModelParameters::GetOffset(size_t i, size_t j) const {
+    if (i >= SpeciesCount || j >= SpeciesCount) {
+        throw std::runtime_error(std::string(__PRETTY_FUNCTION__) + ":" + std::to_string(__LINE__) + "Invalid index: (" + std::to_string(i) + " || " + std::to_string(j) + ") >= " + std::to_string(SpeciesCount));
+    }
     return SpeciesCount * i + j;
 }
 

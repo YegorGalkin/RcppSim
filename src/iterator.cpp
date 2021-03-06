@@ -112,6 +112,9 @@ bool UnitIterator<dim>::operator!=(const UnitIterator<dim>& other) const {
 
 template <size_t dim>
 Unit<dim> UnitIterator<dim>::operator*() const {
+    if (isEnd) {
+        throw std::runtime_error("Invalid unpacking unitIterator");
+    }
     return Unit<dim>(
         grid,
         pos,

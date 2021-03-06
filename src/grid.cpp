@@ -63,7 +63,7 @@ Chunk<dim>& Grid<dim>::GetChunk(const Position<dim>& chunkPos) {
 template <size_t dim>
 double& Grid<dim>::GetChunkDeathRate(const Position<dim>& chunkPos, size_t species) {
     if (species >= ChunkDeathRate.size()) {
-        throw std::runtime_error("Invalid species in " + std::string(__PRETTY_FUNCTION__));
+        throw std::runtime_error("Invalid species " + std::to_string(species) + " in " + std::string(__PRETTY_FUNCTION__));
     }
     if (GetOffset(chunkPos) >= Chunks.size()) {
         throw std::runtime_error("InvalidChunkSize: " + std::to_string(GetOffset(chunkPos)) + " >= " + std::to_string(Chunks.size()));
@@ -74,7 +74,7 @@ double& Grid<dim>::GetChunkDeathRate(const Position<dim>& chunkPos, size_t speci
 template <size_t dim>
 size_t& Grid<dim>::GetChunkPopulation(const Position<dim>& chunkPos, size_t species) {
     if (species >= ChunkPopulation.size()) {
-        throw std::runtime_error("Invalid species in " + std::string(__PRETTY_FUNCTION__));
+        throw std::runtime_error("Invalid species " + std::to_string(species) + " in " + std::string(__PRETTY_FUNCTION__));
     }
     if (GetOffset(chunkPos) >= Chunks.size()) {
         throw std::runtime_error("InvalidChunkSize: " + std::to_string(GetOffset(chunkPos)) + " >= " + std::to_string(Chunks.size()));
@@ -121,11 +121,12 @@ void Grid<dim>::AddInteraction(Unit<dim>& a, Unit<dim>& b, bool isSub) {
     auto ro = Area.Ro(a, b);
     auto aS = a.Species();
     auto bS = b.Species();
-    if (auto interaction = ModelParameters.GetInteraction(aS, bS, ro) >= 0) {
+    double interaction;
+    if ((interaction = ModelParameters.GetInteraction(aS, bS, ro)) > 0) {
         interaction = isSub ? -interaction : interaction;
         AddInteraction(b, interaction);
     }
-    if (auto interaction = ModelParameters.GetInteraction(bS, aS, ro) >= 0) {
+    if ((interaction = ModelParameters.GetInteraction(bS, aS, ro)) > 0) {
         interaction = isSub ? -interaction : interaction;
         AddInteraction(a, interaction);
     }
@@ -153,6 +154,7 @@ bool Grid<dim>::AddUnit(Coord<dim> coord, size_t species) {
     auto newUnit = chunk.AddUnit(*this, pos, coord, species);
     
     ++TotalPopulation[species];
+    ++GetChunkPopulation(pos, species);
     AddDeathRate(newUnit);
     
     for (auto unit : GetLocalUnits(newUnit)) {
@@ -166,6 +168,7 @@ bool Grid<dim>::AddUnit(Coord<dim> coord, size_t species) {
 template <size_t dim>
 void Grid<dim>::RemoveUnit(Unit<dim>& unit) {
     --TotalPopulation[unit.Species()];
+    --GetChunkPopulation(unit.ChunkPosition(), unit.Species());
     SubDeathRate(unit);
     
     for (auto other : GetLocalUnits(unit)) {
@@ -173,7 +176,6 @@ void Grid<dim>::RemoveUnit(Unit<dim>& unit) {
             AddInteraction(unit, other, true);
         }
     }
-    
     unit.RemoveUnit();
 }
 
@@ -219,7 +221,6 @@ void Grid<dim>::KillRandom(size_t species) {
     }
     size_t unitIndex = boost::random::discrete_distribution<>(chunkDeathRateTmp)(Rnd);
     auto unit = Unit<dim>(*this, chunkPosition, unitIndex);
-    
     RemoveUnit(unit);
 }
 
@@ -230,7 +231,7 @@ void Grid<dim>::SpawnRandom(size_t species) {
     
     size_t eventIndex = boost::random::uniform_smallint<>(
         1,
-        chunk.GetPopulation()
+        ChunkPopulation[species][GetOffset(chunkPosition)]
     )(Rnd);
     for (size_t i = 0; ; ++i) {
         if (chunk.GetSpecies(i) == species) {
@@ -257,7 +258,7 @@ void Grid<dim>::SpawnRandom(size_t species) {
 
 template <size_t dim>
 void Grid<dim>::MakeEvent() {
-    if (GetAllPopulation()) {
+    if (!GetAllPopulation()) {
         return;
     }
     
@@ -354,6 +355,13 @@ void Grid<dim>::InitializePopulation(const Rcpp::List& params) {
 template <size_t dim>
 const std::vector<size_t> Grid<dim>::GetTotalPopulation() const {
     return TotalPopulation;
+}
+
+template <size_t dim>
+void Grid<dim>::RunEvents(size_t count) {
+    for (auto i : irange(count)) {
+        MakeEvent();
+    }
 }
 
 template class Grid<1>;

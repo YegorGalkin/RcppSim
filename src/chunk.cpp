@@ -8,7 +8,7 @@ Unit<dim> Chunk<dim>::AddUnit(Grid<dim>& grid, Position<dim> chunkPosition, Coor
     
     Coords.push_back(coord);
     DeathRate.push_back(0.0);
-    Species.push_back(species);
+    Species.push_back(species);   
     return Unit<dim>(
         grid,
         chunkPosition,
@@ -38,6 +38,9 @@ const Coord<dim>& Chunk<dim>::GetCoord(size_t i) const {
 
 template <size_t dim>
 void Chunk<dim>::RemoveUnit(size_t i) {
+    if (i >= GetPopulation()) {
+        throw std::runtime_error("Invalid Deletion unit i: " + std::to_string(i) + " : Population: " + std::to_string(GetPopulation()));
+    }
     auto lastIndex = Coords.size() - 1;
     if (i != lastIndex) {
         std::swap(Coords[i], Coords[lastIndex]);

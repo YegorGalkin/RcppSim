@@ -5,6 +5,8 @@
 #include <array>
 #include <iostream>
 
+using std::to_string;
+
 using pos_t = int32_t;
 
 template<size_t dim>
@@ -33,6 +35,20 @@ using Position = std::array<pos_t, dim>;
 
 template<size_t dim>
 std::string ToString(const Position<dim>& pos) {
+    std::stringstream a;
+    a << "(";
+    for (size_t i = 0; i < dim; ++i) {
+        a << pos[i];
+        if (i != 0) {
+            a << ", ";
+        }
+    }
+    a << ")";
+    return a.str();
+}
+
+template<size_t dim>
+std::string to_string(const Coord<dim>& pos) {
     std::stringstream a;
     a << "(";
     for (size_t i = 0; i < dim; ++i) {

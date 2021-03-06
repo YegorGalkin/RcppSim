@@ -5,14 +5,15 @@ library(doParallel)
 
 
 linespec = function(from, to, count) {
-    return((0:(count - 1)) / count * (to - from) + from)
+    return((0:(count)) / count * (to - from) + from)
 }
 
 file_name = "NEW_TEST"
 
-area_length = 200
+area_length = 10
 cell_count_x = 100
 x_grid_points = 5000
+epsilon = 1e-12
 
 SPECIES_COUNT = 2;
 
@@ -61,7 +62,7 @@ for (i in 1:SPECIES_COUNT) {
         popul_x = c(popul_x, c(runif(1, 0, area_length)))
         popul_s = c(popul_s, c(i - 1))
     }
-    grid = linespec(0, 1, x_grid_points)
+    grid = linespec(0 + epsilon, 1 - epsilon, x_grid_points)
     sigma = sigma_m[i]
     
     params[[paste("birth_kernel", "y", i, sep = "_")]] = qnorm(grid, sd = sigma)
@@ -82,3 +83,18 @@ params[[paste("initial_population", "x", sep = "_")]] = popul_x
 params[["initial_population_species"]] = popul_s
 sim = new(poisson_1d_n_species, params);
 
+iter_count = 1000
+events_coef = 1000
+res = matrix(
+    ncol = SPECIES_COUNT + 1,
+    nrow = iter_count + 1
+)
+
+for (i in 1:iter_count) {
+    res[i, 1] = iter_count * (i - 1)
+    res[i, 2:(SPECIES_COUNT + 1)] = sim$total_population() / area_length
+    sim$run_events(events_coef)
+}
+  
+res[(iter_count+1), 1] = iter_count * (iter_count)
+res[(iter_count+1), 2:(SPECIES_COUNT + 1)] = sim$total_population() / area_length 

@@ -29,7 +29,7 @@ params_all <- grid_points%>%
   mutate(area_length_x=100*pmax(sm,sw),periodic=TRUE,cell_count_x=100L)%>%
   mutate(n_samples = 100L)
 
-# Prepares enviroment for multiprocess results
+# Prepares environment for multiprocess results
 
 all_runs = listenv()
 

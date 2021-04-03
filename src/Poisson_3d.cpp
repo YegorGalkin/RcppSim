@@ -2,25 +2,13 @@
 // [[Rcpp::plugins(cpp11)]]
 #include <Rcpp.h>
 #include <stdio.h>
-#include <functional>
-#include <list>
 #include <chrono>
-#include <ctime>
 #include <vector>
-#include <string>
-#include <fstream>
 #include <math.h>
-#include <tuple>
-#include <iomanip>
 #include <boost/random.hpp>
 #include <boost/random/lagged_fibonacci.hpp>
 #include <boost/random/exponential_distribution.hpp>
-#include <boost/math/tools/roots.hpp>
-#include <boost/fusion/sequence.hpp>
-#include <boost/fusion/include/sequence.hpp>
-#include <boost/fusion/adapted/std_tuple.hpp>
 #include <boost/math/interpolators/cubic_b_spline.hpp>
-#include <boost/math/quadrature/trapezoidal.hpp>
 
 
 using namespace std;
@@ -53,7 +41,11 @@ struct Grid_3d {
   int cell_count_x;
   int cell_count_y;
   int cell_count_z;
-  
+    
+  int cull_x;
+  int cull_y;
+  int cull_z;
+
   double b, d, dd;
   int seed;
   boost::random::lagged_fibonacci2281 rng;
@@ -64,40 +56,25 @@ struct Grid_3d {
 
   int total_population;
 
-  int population_limit;
-  bool pop_cap_reached;
+  chrono::system_clock::time_point init_time;
+  double realtime_limit;
+  bool realtime_limit_reached;
 
   double total_death_rate;
   
   double time;
   int event_count;
   
-  std::vector < double > death_kernel_y;
-  std::vector < double > birth_kernel_y;
-  
-  double spline_precision;
-  
+  std::vector<double> death_y;
   double death_cutoff_r;
-  double birth_cutoff_r;
-  
   double death_step;
-  double birth_step;
-  double birth_reverse_cdf_step;
-  
   int death_spline_nodes;
-  int birth_spline_nodes;
-  int birth_reverse_cdf_nodes;
-  
-  boost::math::cubic_b_spline < double > death_kernel_spline;
-  boost::math::cubic_b_spline < double > birth_kernel_spline;
-  
-  boost::math::cubic_b_spline < double > birth_reverse_cdf_spline;
-  
-  int cull_x;
-  int cull_y;
-  int cull_z;
-  
-  std::tuple < double, int > last_event;
+  boost::math::cubic_b_spline<double> death_spline;
+
+  std::vector<double> birth_inverse_rcdf_y;
+  double birth_inverse_rcdf_step;
+  int birth_inverse_rcdf_nodes;
+  boost::math::cubic_b_spline<double> birth_inverse_rcdf_spline;
   
   Cell_3d & cell_at(int i,int j,int k) {
     if (periodic) {
@@ -283,7 +260,7 @@ struct Grid_3d {
                     if (distance > death_cutoff_r)
                       continue; //Too far to interact
             
-                    double interaction = dd * death_kernel_spline(distance);
+                    double interaction = dd * death_spline(distance);
             
                     cell_at(i,j,k).death_rates[w] += interaction;
                     cell_death_rate_at(i,j,k) += interaction;
@@ -362,7 +339,7 @@ struct Grid_3d {
         
             if (distance > death_cutoff_r) continue; //Too far to interact
         
-            double interaction = dd * death_kernel_spline(distance);
+            double interaction = dd * death_spline(distance);
         
             cell_at(i,j,k).death_rates[w] -= interaction;
             //ignore dying speciment death rates since it is to be deleted
@@ -400,21 +377,22 @@ struct Grid_3d {
   
   void spawn_random() {
     int cell_index = boost::random::discrete_distribution < > (cell_population)(rng);
-    
     int event_index = boost::random::uniform_smallint < > (0, cell_population[cell_index] - 1)(rng);
-    
     Cell_3d & parent_cell = cells[cell_index];
     
-    double x_dispacement = birth_cutoff_r;
-    double y_dispacement = birth_cutoff_r;
-    double z_dispacement = birth_cutoff_r;
-    
-    while(x_dispacement*x_dispacement+y_dispacement*y_dispacement+z_dispacement*z_dispacement>birth_cutoff_r*birth_cutoff_r){
-      x_dispacement = birth_reverse_cdf_spline(boost::random::uniform_01 < > ()(rng)) * (boost::random::bernoulli_distribution < > (0.5)(rng) * 2 - 1);
-      y_dispacement = birth_reverse_cdf_spline(boost::random::uniform_01 < > ()(rng)) * (boost::random::bernoulli_distribution < > (0.5)(rng) * 2 - 1);
-      z_dispacement = birth_reverse_cdf_spline(boost::random::uniform_01 < > ()(rng)) * (boost::random::bernoulli_distribution < > (0.5)(rng) * 2 - 1);
-    }
-    
+    // Generates x, y and z coordinates uniformly distributed on a sphere
+    // See https://stackoverflow.com/questions/38038776/computationally-picking-a-random-point-on-a-n-sphere
+    double x_normal = boost::random::normal_distribution<>()(rng);
+    double y_normal = boost::random::normal_distribution<>()(rng);
+    double z_normal = boost::random::normal_distribution<>()(rng);
+
+    // Uses radius distribution to create spherical simmetrical function
+    double r_dispacement = birth_inverse_rcdf_spline(boost::random::uniform_01 < > ()(rng));
+
+    double x_dispacement = x_normal / sqrt(x_normal*x_normal + y_normal*y_normal + z_normal*z_normal) * r_dispacement;
+    double y_dispacement = y_normal / sqrt(x_normal*x_normal + y_normal*y_normal + z_normal*z_normal) * r_dispacement;
+    double z_dispacement = z_normal / sqrt(x_normal*x_normal + y_normal*y_normal + z_normal*z_normal) * r_dispacement;
+
     double x_coord_new = parent_cell.coords_x[event_index] + x_dispacement;
     double y_coord_new = parent_cell.coords_y[event_index] + y_dispacement;
     double z_coord_new = parent_cell.coords_z[event_index] + z_dispacement;
@@ -504,7 +482,7 @@ struct Grid_3d {
             distance =sqrt(delta_x*delta_x+delta_y*delta_y+delta_z*delta_z);
             if (distance > death_cutoff_r) continue; //Too far to interact
         
-            double interaction = dd * death_kernel_spline(distance);
+            double interaction = dd * death_spline(distance);
         
             cell_at(i,j,k).death_rates[w] += interaction;
             cell_at(new_i,new_j,new_k).death_rates[cell_population_at(new_i,new_j,new_k) - 1] += interaction;
@@ -534,54 +512,53 @@ struct Grid_3d {
   }
 
 
- void run_events(int events) {
-    if (events > 0) {
-    for (int i = 0; i < events; i++) {
-      if (total_population > population_limit){
-        pop_cap_reached = true;
-        return;
+void run_events(int events)
+  {
+    if (events > 0)
+    {
+      for (int i = 0; i < events; i++)
+      {
+        if (chrono::system_clock::now() > init_time + chrono::duration<double>(realtime_limit))
+        {
+          realtime_limit_reached = true;
+          return;
+        }
+        make_event();
       }
-      make_event();
-    }
     }
   }
   
-  void run_for(double time) {
-    if (time > 0.0) {
-    double time0 = this -> time;
-    while (this -> time < time0 + time) {
-      if (total_population > population_limit){
-        pop_cap_reached = true;
-        return;
+  void run_for(double time)
+  {
+    if (time > 0.0)
+    {
+      double time0 = this->time;
+      while (this->time < time0 + time)
+      {
+        if (chrono::system_clock::now() > init_time + chrono::duration<double>(realtime_limit))
+        {
+          realtime_limit_reached = true;
+          return;
+        }
+        make_event();
       }
-      make_event();
     }
-    }
-  }
-  
-  double get_birth_spline_value(double at) {
-    return birth_kernel_spline(at);
   }
   
   double get_death_spline_value(double at) {
-    return death_kernel_spline(at);
+    return death_spline(at);
   }
   
-  double get_birth_reverse_cdf_spline_value(double at) {
-    return birth_reverse_cdf_spline(at);
+  double get_birth_inverse_rcdf_spline_value(double at) {
+    return birth_inverse_rcdf_spline(at);
   }
   
   Grid_3d(Rcpp::List params): time(), event_count(), 
   cells(), cell_death_rates(), cell_population(),
-  death_kernel_spline(), birth_kernel_spline(), birth_reverse_cdf_spline(), 
-  total_population(),population_limit(),pop_cap_reached(false) {
+  death_spline(), birth_inverse_rcdf_spline(), 
+  total_population(), realtime_limit_reached(false) {
     
     //Parse parameters
-    
-    Rcpp::Environment base("package:base");
-    
-    // Make function callable from C++
-    Rcpp::Function print = base["print"];
     
     area_length_x = Rcpp::as < double > (params["area_length_x"]);
     area_length_y = Rcpp::as < double > (params["area_length_y"]);
@@ -602,83 +579,33 @@ struct Grid_3d {
     initial_population_y = Rcpp::as < vector < double >> (params["initial_population_y"]);
     initial_population_z = Rcpp::as < vector < double >> (params["initial_population_z"]);
 
-    death_kernel_y = Rcpp::as < vector < double >> (params["death_kernel_y"]);
-    death_cutoff_r = Rcpp::as < double > (params["death_kernel_r"]);
-    death_spline_nodes = death_kernel_y.size();
+    death_y = Rcpp::as < vector < double >> (params["death_y"]);
+    death_cutoff_r = Rcpp::as < double > (params["death_r"]);
+    death_spline_nodes = death_y.size();
     death_step = death_cutoff_r / (death_spline_nodes - 1);
     
-    birth_kernel_y = Rcpp::as < vector < double >> (params["birth_kernel_y"]);
-    birth_cutoff_r = Rcpp::as < double > (params["birth_kernel_r"]);
-    birth_spline_nodes = birth_kernel_y.size();
-    birth_step = birth_cutoff_r / (birth_spline_nodes - 1);
-    
-    spline_precision = Rcpp::as < double > (params["spline_precision"]);
+    birth_inverse_rcdf_y = Rcpp::as<vector<double>>(params["birth_y"]);
+    birth_inverse_rcdf_nodes = birth_inverse_rcdf_y.size();
+    birth_inverse_rcdf_step = 1.0 / (birth_inverse_rcdf_nodes - 1);
     
     periodic = Rcpp::as < bool > (params["periodic"]);
-    population_limit = Rcpp::as < int > (params["population_limit"]);
-    
 
+    init_time = chrono::system_clock::now();
+    realtime_limit = Rcpp::as<double>(params["realtime_limit"]);
+    
     using boost::math::cubic_b_spline;
     //Build death spline, ensure 0 derivative at 0 (symmetric) and endpoint (expected no death interaction further)
-    death_kernel_spline = cubic_b_spline < double > (death_kernel_y.begin(), death_kernel_y.end(), 0, death_step, 0, 0);
-    //trim_spline(death_kernel_x, death_kernel_y, death_kernel_spline, death_spline_nodes, death_cutoff_r, spline_precision);
-    
+    death_spline = cubic_b_spline < double > (death_y.begin(), death_y.end(), 0, death_step, 0, 0);
+     
     //Calculate amount of cells to check around for death interaction
     
     cull_x = max(static_cast < int > (ceil(death_cutoff_r / (area_length_x / cell_count_x))), 3);
     cull_y = max(static_cast < int > (ceil(death_cutoff_r / (area_length_y / cell_count_y))), 3);
     cull_z = max(static_cast < int > (ceil(death_cutoff_r / (area_length_z / cell_count_z))), 3);
 
-    //Build birth spline
-    birth_kernel_spline = cubic_b_spline < double > (birth_kernel_y.begin(), birth_kernel_y.end(), 0, birth_step, 0, 0);
-    //trim_spline(birth_kernel_x, birth_kernel_y, birth_kernel_spline, birth_spline_nodes, birth_cutoff_r, spline_precision);
-    //Calculate reverse CDF for birth spline
-    
-    vector < double > x_quantile_1d_array(birth_spline_nodes);
-    vector < double > y_quantile_1d_array(birth_spline_nodes);
-    
-    using boost::math::quadrature::trapezoidal;
-    double approx_const = trapezoidal([ = ](double y) {
-      return birth_kernel_spline(y);
-    }, 0.0, birth_cutoff_r);
-    
-    using boost::math::tools::newton_raphson_iterate;
-    
-    for (int i = 0; i < birth_spline_nodes; i++) {
-      x_quantile_1d_array[i] = (double) i / (birth_spline_nodes - 1);
-      y_quantile_1d_array[i] =
-        newton_raphson_iterate(
-          [ = ](double y) {
-            return make_tuple(
-              trapezoidal([ = ](double z) {
-                return birth_kernel_spline(z);
-              }, 0.0, y) / approx_const - x_quantile_1d_array[i],
-                                                             birth_kernel_spline(y) / approx_const);
-          },
-          1e-10, 0.0, birth_cutoff_r, numeric_limits < double > ::digits);
-    }
-    int i = 0;
-    while (y_quantile_1d_array[i] < 1e-300) {
-      i++;
-    }
-    
-    vector < double > y_quantile_1d_array_temp(birth_spline_nodes - i);
-    
-    for (int j = 0; j < birth_spline_nodes - i; j++) {
-      y_quantile_1d_array_temp[j] = y_quantile_1d_array[i + j];
-    }
-    
-    birth_reverse_cdf_step = 1.0 / (y_quantile_1d_array_temp.size() - 1);
-    birth_reverse_cdf_nodes = y_quantile_1d_array_temp.size();
-    // Extrapolate last quantile element
-    double right_derivative = (y_quantile_1d_array_temp[y_quantile_1d_array_temp.size() - 2] - y_quantile_1d_array_temp[y_quantile_1d_array_temp.size() - 3]) / birth_reverse_cdf_step;
-    
-    y_quantile_1d_array_temp[y_quantile_1d_array_temp.size() - 1] = y_quantile_1d_array_temp[y_quantile_1d_array_temp.size() - 2] + right_derivative * birth_reverse_cdf_step;
-    
-    //Ensure correct derivative at 0, equal to 1/2*birth_kernel(0)
-    birth_reverse_cdf_spline = cubic_b_spline < double > (y_quantile_1d_array_temp.begin(), y_quantile_1d_array_temp.end(), 0, birth_reverse_cdf_step,
-                                                          0.5 / birth_kernel_spline(0), 2 * right_derivative);
-    
+    //Build birth inverse rcdf spline, endpoint derivatives not specified
+    birth_inverse_rcdf_spline = cubic_b_spline<double>(birth_inverse_rcdf_y.begin(), birth_inverse_rcdf_y.end(), 0, birth_inverse_rcdf_step);
+
     //Spawn speciments and calculate death rates
     Initialize_death_rates();
     total_death_rate = accumulate(cell_death_rates.begin(), cell_death_rates.end(), 0.0);
@@ -711,20 +638,14 @@ RCPP_MODULE(poisson_3d_module) {
   .field_readonly("initial_population_y", & Grid_3d::initial_population_y)
   .field_readonly("initial_population_z", & Grid_3d::initial_population_y)
 
-  .field_readonly("death_kernel_y", & Grid_3d::death_kernel_y)
+  .field_readonly("death_y", & Grid_3d::death_y)
   .field_readonly("death_cutoff_r", & Grid_3d::death_cutoff_r)
   .field_readonly("death_spline_nodes", & Grid_3d::death_spline_nodes)
   .field_readonly("death_step", & Grid_3d::death_step)
   
-  .field_readonly("birth_kernel_y", & Grid_3d::birth_kernel_y)
-  .field_readonly("birth_cutoff_r", & Grid_3d::birth_cutoff_r)
-  .field_readonly("birth_spline_nodes", & Grid_3d::birth_spline_nodes)
-  .field_readonly("birth_step", & Grid_3d::birth_step)
-  
-  .field_readonly("birth_reverse_cdf_nodes", & Grid_3d::birth_reverse_cdf_nodes)
-  .field_readonly("birth_reverse_cdf_step", & Grid_3d::birth_reverse_cdf_step)
-  
-  .field_readonly("spline_precision", & Grid_3d::spline_precision)
+  .field_readonly("birth_inverse_rcdf_y", &Grid_3d::birth_inverse_rcdf_y)
+  .field_readonly("birth_inverse_rcdf_nodes", &Grid_3d::birth_inverse_rcdf_nodes)
+  .field_readonly("birth_inverse_rcdf_step", &Grid_3d::birth_inverse_rcdf_step)
   
   .field_readonly("cell_death_rates", & Grid_3d::cell_death_rates)
   .field_readonly("cell_population", & Grid_3d::cell_population)
@@ -740,9 +661,8 @@ RCPP_MODULE(poisson_3d_module) {
 
   .method("get_death_rates_in_cell", & Grid_3d::get_death_rates_at_cell)
   
-  .method("birth_spline_at", & Grid_3d::get_birth_spline_value)
   .method("death_spline_at", & Grid_3d::get_death_spline_value)
-  .method("birth_reverse_cdf_spline_at", & Grid_3d::get_birth_reverse_cdf_spline_value)
+  .method("birth_inverse_rcdf_spline_at", & Grid_3d::get_birth_inverse_rcdf_spline_value)
   
   .method("make_event", & Grid_3d::make_event)
   .method("run_events", & Grid_3d::run_events)
@@ -753,8 +673,9 @@ RCPP_MODULE(poisson_3d_module) {
   .field_readonly("events", & Grid_3d::event_count)
   .field_readonly("time", & Grid_3d::time)
   
-  .field_readonly("population_limit", & Grid_3d::population_limit)
-  .field_readonly("pop_cap_reached", & Grid_3d::pop_cap_reached);
+  .field_readonly("realtime_limit", &Grid_3d::realtime_limit)
+  .field_readonly("realtime_limit_reached", &Grid_3d::realtime_limit_reached);
+
 }
 
 # endif

@@ -101,7 +101,7 @@ struct Grid_1d
     return cell_population[i];
   }
 
-  vector<double> get_coords_at_cell(int i)
+  vector<double> get_x_coords_at_cell(int i)
   {
     return cells[i].coords_x;
   }
@@ -111,7 +111,7 @@ struct Grid_1d
     return cells[i].death_rates;
   }
 
-  vector<double> get_all_coords()
+  vector<double> get_all_x_coords()
   {
     vector<double> result;
     for (auto cell : cells)
@@ -534,10 +534,10 @@ RCPP_MODULE(poisson_1d_module)
       .field_readonly("cell_death_rates", &Grid_1d::cell_death_rates)
       .field_readonly("cell_population", &Grid_1d::cell_population)
 
-      .method("get_all_x_coordinates", &Grid_1d::get_all_coords)
+      .method("get_all_x_coordinates", &Grid_1d::get_all_x_coords)
       .method("get_all_death_rates", &Grid_1d::get_all_death_rates)
 
-      .method("get_x_coordinates_in_cell", &Grid_1d::get_coords_at_cell)
+      .method("get_x_coordinates_in_cell", &Grid_1d::get_x_coords_at_cell)
       .method("get_death_rates_in_cell", &Grid_1d::get_death_rates_at_cell)
 
       .method("death_spline_at", &Grid_1d::get_death_spline_value)

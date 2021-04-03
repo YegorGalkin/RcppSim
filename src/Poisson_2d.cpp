@@ -493,7 +493,7 @@ void run_events(int events)
     death_spline_nodes = death_y.size();
     death_step = death_cutoff_r / (death_spline_nodes - 1);
     
-    birth_inverse_rcdf_y = Rcpp::as<vector<double>>(params["birth_y"]);
+    birth_inverse_rcdf_y = Rcpp::as<vector<double>>(params["birth_ircdf_y"]);
     birth_inverse_rcdf_nodes = birth_inverse_rcdf_y.size();
     birth_inverse_rcdf_step = 1.0 / (birth_inverse_rcdf_nodes - 1);
     

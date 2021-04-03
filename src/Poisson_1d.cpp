@@ -8,7 +8,7 @@
 #include <boost/random.hpp>
 #include <boost/random/lagged_fibonacci.hpp>
 #include <boost/random/exponential_distribution.hpp>
-#include <boost/math/interpolators/cubic_b_spline.hpp>
+#include <boost/math/interpolators/cardinal_cubic_b_spline.hpp>
 
 using namespace std;
 
@@ -58,12 +58,12 @@ struct Grid_1d
   double death_cutoff_r;
   double death_step;
   int death_spline_nodes;
-  boost::math::cubic_b_spline<double> death_spline;
+  boost::math::interpolators::cardinal_cubic_b_spline<double> death_spline;
 
   std::vector<double> birth_inverse_rcdf_y;
   double birth_inverse_rcdf_step;
   int birth_inverse_rcdf_nodes;
-  boost::math::cubic_b_spline<double> birth_inverse_rcdf_spline;
+  boost::math::interpolators::cardinal_cubic_b_spline<double> birth_inverse_rcdf_spline;
 
   Cell_1d &cell_at(int i)
   {
@@ -451,10 +451,10 @@ struct Grid_1d
     return birth_inverse_rcdf_spline(at);
   }
 
-  Grid_1d(Rcpp::List params) : time(), event_count(),
-                                      cells(), cell_death_rates(), cell_population(),
-                                      death_spline(), birth_inverse_rcdf_spline(),
-                                      total_population(), realtime_limit_reached(false)
+  Grid_1d(Rcpp::List params) : time(), cells(), event_count(),
+                                cell_death_rates(), cell_population(),
+                               death_spline(), birth_inverse_rcdf_spline(),
+                               total_population(), realtime_limit_reached(false)
   {
 
     //Parse parameters
@@ -485,9 +485,9 @@ struct Grid_1d
     init_time = chrono::system_clock::now();
     realtime_limit = Rcpp::as<double>(params["realtime_limit"]);
 
-    using boost::math::cubic_b_spline;
+    using boost::math::interpolators::cardinal_cubic_b_spline;
     //Build death spline, ensure 0 derivative at 0 (symmetric) and endpoint (expected no death interaction further)
-    death_spline = cubic_b_spline<double>(death_y.begin(), death_y.end(), 0, death_step, 0, 0);
+    death_spline = cardinal_cubic_b_spline<double>(death_y.begin(), death_y.end(), 0, death_step, 0, 0);
 
     //Calculate amount of cells to check around for death interaction
 
@@ -495,7 +495,7 @@ struct Grid_1d
 
     //Build birth inverse rcdf spline, endpoint derivatives not specified
 
-    birth_inverse_rcdf_spline = cubic_b_spline<double>(birth_inverse_rcdf_y.begin(), birth_inverse_rcdf_y.end(), 0, birth_inverse_rcdf_step);
+    birth_inverse_rcdf_spline = cardinal_cubic_b_spline<double>(birth_inverse_rcdf_y.begin(), birth_inverse_rcdf_y.end(), 0, birth_inverse_rcdf_step);
 
     //Spawn specimens and calculate death rates
     Initialize_death_rates();

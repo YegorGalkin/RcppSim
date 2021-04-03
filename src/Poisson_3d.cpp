@@ -8,7 +8,7 @@
 #include <boost/random.hpp>
 #include <boost/random/lagged_fibonacci.hpp>
 #include <boost/random/exponential_distribution.hpp>
-#include <boost/math/interpolators/cubic_b_spline.hpp>
+#include <boost/math/interpolators/cardinal_cubic_b_spline.hpp>
 
 
 using namespace std;
@@ -69,12 +69,12 @@ struct Grid_3d {
   double death_cutoff_r;
   double death_step;
   int death_spline_nodes;
-  boost::math::cubic_b_spline<double> death_spline;
+  boost::math::interpolators::cardinal_cubic_b_spline<double> death_spline;
 
   std::vector<double> birth_inverse_rcdf_y;
   double birth_inverse_rcdf_step;
   int birth_inverse_rcdf_nodes;
-  boost::math::cubic_b_spline<double> birth_inverse_rcdf_spline;
+  boost::math::interpolators::cardinal_cubic_b_spline<double> birth_inverse_rcdf_spline;
   
   Cell_3d & cell_at(int i,int j,int k) {
     if (periodic) {
@@ -593,9 +593,9 @@ void run_events(int events)
     init_time = chrono::system_clock::now();
     realtime_limit = Rcpp::as<double>(params["realtime_limit"]);
     
-    using boost::math::cubic_b_spline;
+    using boost::math::interpolators::cardinal_cubic_b_spline;
     //Build death spline, ensure 0 derivative at 0 (symmetric) and endpoint (expected no death interaction further)
-    death_spline = cubic_b_spline < double > (death_y.begin(), death_y.end(), 0, death_step, 0, 0);
+    death_spline = cardinal_cubic_b_spline < double > (death_y.begin(), death_y.end(), 0, death_step, 0, 0);
      
     //Calculate amount of cells to check around for death interaction
     
@@ -604,7 +604,7 @@ void run_events(int events)
     cull_z = max(static_cast < int > (ceil(death_cutoff_r / (area_length_z / cell_count_z))), 3);
 
     //Build birth inverse rcdf spline, endpoint derivatives not specified
-    birth_inverse_rcdf_spline = cubic_b_spline<double>(birth_inverse_rcdf_y.begin(), birth_inverse_rcdf_y.end(), 0, birth_inverse_rcdf_step);
+    birth_inverse_rcdf_spline = cardinal_cubic_b_spline<double>(birth_inverse_rcdf_y.begin(), birth_inverse_rcdf_y.end(), 0, birth_inverse_rcdf_step);
 
     //Spawn speciments and calculate death rates
     Initialize_death_rates();

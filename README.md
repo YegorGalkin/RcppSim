@@ -9,5 +9,5 @@ This repository contains source code (R/Rcpp) required to run spatial population
   - Install required R packages from CRAN (devtools, Rcpp, BH)
   - Install this source package using devtools
 ```R
-devtools::install_github("YegorGalkin/RcppSim")
+devtools::install_github("YegorGalkin/RcppSim",ref='interface_update')
 ```

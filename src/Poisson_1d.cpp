@@ -503,12 +503,13 @@ struct Grid_1d
   }
 };
 
+RCPP_EXPOSED_CLASS(poisson_1d)
 RCPP_MODULE(poisson_1d_module)
 {
   using namespace Rcpp;
 
   class_<Grid_1d>("poisson_1d")
-      .constructor<List>()
+      .constructor<List>("Creates an instance of 1d simulator")
       .field_readonly("area_length_x", &Grid_1d::area_length_x)
       .field_readonly("cell_count_x", &Grid_1d::cell_count_x)
 

@@ -520,11 +520,12 @@ void run_events(int events)
   }
 };
 
+RCPP_EXPOSED_CLASS(poisson_2d)
 RCPP_MODULE(poisson_2d_module) {
   using namespace Rcpp;
   
   class_ < Grid_2d > ("poisson_2d")
-  .constructor < List > ()
+  .constructor < List > ("Creates an instance of 2d simulator")
   .field_readonly("area_length_x", & Grid_2d::area_length_x)
   .field_readonly("area_length_y", & Grid_2d::area_length_y)
   .field_readonly("cell_count_x", & Grid_2d::cell_count_x)

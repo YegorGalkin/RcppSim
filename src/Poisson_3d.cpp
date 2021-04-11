@@ -612,11 +612,12 @@ void run_events(int events)
   }
 };
 
+RCPP_EXPOSED_CLASS(poisson_3d)
 RCPP_MODULE(poisson_3d_module) {
   using namespace Rcpp;
   
   class_ < Grid_3d > ("poisson_3d")
-  .constructor < List > ()
+  .constructor < List > ("Creates an instance of 3d simulator")
   .field_readonly("area_length_x", & Grid_3d::area_length_x)
   .field_readonly("area_length_y", & Grid_3d::area_length_y)
   .field_readonly("area_length_z", & Grid_3d::area_length_z)

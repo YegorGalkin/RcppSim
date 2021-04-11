@@ -72,3 +72,6 @@ Simulator object with methods for running
 \description{
 Creates space-time birth-death poisson point process simulation with given parameters
 }
+\examples{
+
+}

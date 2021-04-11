@@ -13,6 +13,10 @@
 run_simulation<-
   function(simulator, epochs, calculate.pcf=FALSE, pcf_grid){
   
+    require(dplyr)
+    require(spatstat)
+    require(glue)
+    
   time<-numeric(epochs+1)
   pop<-numeric(epochs+1)
   realtime_limit_reached<-FALSE
@@ -26,8 +30,20 @@ run_simulation<-
     time[j]=simulator$time
   }
   
+  if(class(simulator)[1]=='Rcpp_poisson_1d'){
+    pattern = data.frame(x=simulator$get_all_x_coordinates())
+  }else if(class(simulator)[1]=='Rcpp_poisson_2d'){
+    pattern = data.frame(x=simulator$get_all_x_coordinates(),
+                         y=simulator$get_all_y_coordinates())
+  }else if(class(simulator)[1]=='Rcpp_poisson_3d'){
+    pattern = data.frame(x=simulator$get_all_x_coordinates(),
+                         y=simulator$get_all_y_coordinates(),
+                         z=simulator$get_all_z_coordinates())
+  }
+  
   result <- list('realtime_limit_reached' = simulator$realtime_limit_reached,
-                 'population' = data.frame(time=time,pop=pop))
+                 'population' = data.frame(time=time,pop=pop)%>%distinct(),
+                 'pattern' = pattern)
   
   if (calculate.pcf){
     if(class(simulator)[1]=='Rcpp_poisson_1d'){

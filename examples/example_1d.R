@@ -20,5 +20,5 @@ ggplot(sim_results$population,aes(x=time,y=pop))+
 ggplot(sim_results$pcf,aes(x=r,y=pcf))+
   geom_line()
 
-ggplot(sim_results$K,aes(x=r,y=iso))+
+ggplot(sim_results$K,aes(x=r,y=K_iso))+
   geom_line()

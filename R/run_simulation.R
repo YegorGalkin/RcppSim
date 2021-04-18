@@ -58,7 +58,7 @@ run_simulation<-
       points<-ppp(simulator$get_all_x_coordinates(),
                   rep(0,simulator$total_population),
                   c(0,simulator$area_length_x),
-                  c(-sim$area_length_x/2,sim$area_length_x/2)
+                  c(-simulator$area_length_x/2,simulator$area_length_x/2)
       )
       
       if (missing(pcf_grid)){
@@ -70,7 +70,7 @@ run_simulation<-
       
       pcf_estimate <- 
         data.frame(Kest=K_estimate$iso/2,x=pcf_grid)%>%                
-        mutate(pfc=(Kest-lag(Kest))/(pcf_grid-lag(pcf_grid))/sim$area_length_x)%>% 
+        mutate(pfc=(Kest-lag(Kest))/(pcf_grid-lag(pcf_grid))/simulator$area_length_x)%>% 
         pull(pfc)  
       
     }else if(class(simulator)[1]=='Rcpp_poisson_2d'){

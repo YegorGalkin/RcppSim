@@ -30,6 +30,13 @@ run_simulation<-
     time[j]=simulator$time
   }
   
+  if(simulator$total_population == 0){
+    return(
+      list('realtime_limit_reached' = simulator$realtime_limit_reached,
+           'population' = data.frame(time=time,pop=pop)%>%distinct())
+    )
+  }
+  
   if(class(simulator)[1]=='Rcpp_poisson_1d'){
     pattern = data.frame(x=simulator$get_all_x_coordinates())
   }else if(class(simulator)[1]=='Rcpp_poisson_2d'){

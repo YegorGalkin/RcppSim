@@ -39,6 +39,11 @@ initialize_simulator <-
            ndim=1){
     
     stopifnot(ndim %in% c(1, 2, 3))
+    stopifnot(b>d)
+    stopifnot(all(death_y>0))
+    stopifnot(all(birth_ircdf_y>0))
+    stopifnot(all(birth_ircdf_y<area_length_x))
+    stopifnot(death_r<area_length_x)
     
     sim_params <-
       list("area_length_x"=area_length_x, 

@@ -1,4 +1,14 @@
-#' Creates space-time birth-death poisson point process simulation with given parameters
+#' Creates space-time birth-death poisson point process simulation with given parameters.
+#' 
+#' @description
+#' Length of simulation area should be large enough for birth and death kernels.
+#' Requires birth rate to be greater than death rate.
+#' Death kernel should be specified as a pair of max death interaction radius
+#' and values of death kernel on uniform grid.
+#' Birth kernel should be specified as a inverse cumulative distribution function 
+#' (function of quantiles) of radius-distribution. In 1d case for normal distributions,
+#' quantiles of normal distribution could be used. In 2d and 3d case, Rayleigh and Maxwell 
+#' distribution quantiles are required.
 #'
 #' @param area_length_x Length of simulated area by x axis
 #' @param area_length_y Length of simulated area by y axis
@@ -25,7 +35,16 @@
 #' @export
 #'
 #' @examples
-#' 
+#' sim<-initialize_simulator(area_length_x = 100, dd=0.01,
+#'                           initial_population_x = c(10),
+#'                           death_r = 5,
+#'                           death_y = dnorm(seq(0,5,length.out = 1001), sd = 1),
+#'                           birth_ircdf_y = qnorm(seq(0.5,1-1e-6,length.out = 101), sd = 0.2),
+#'                           realtime_limit = 60)
+#' # Runs 1d simulator for a million events or 60 seconds maximum                          
+#' sim$run_events(1e6)
+#' # Shows population in the end of simulation
+#' sim$total_population
 initialize_simulator <- 
   function(area_length_x,area_length_y,area_length_z,
            cell_count_x=100,cell_count_y=100,cell_count_z=100,

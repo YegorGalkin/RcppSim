@@ -115,6 +115,7 @@ run_simulation<-
     }
     
     result[['pcf']]<-data.frame(r=pcf_grid,pcf=pcf_estimate)
+    result[['K']]<-data.frame(r=pcf_grid,iso=K_estimate$iso)
 }
   
   return(result)

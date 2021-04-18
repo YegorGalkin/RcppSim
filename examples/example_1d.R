@@ -1,5 +1,5 @@
 library(pacman)
-p_load(tidyverse,spatstat,glue)
+p_load(tidyverse)
 library(MathBioSim)
 
 sim<-initialize_simulator(area_length_x = 100, dd=0.01,

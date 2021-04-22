@@ -23,6 +23,6 @@ RcppModules:
   poisson_2d_module,
   poisson_3d_module
 SystemRequirements: C++11
-Suggests: testthat, spatstat
+Suggests: testthat, future, VGAM, fOptions
 RoxygenNote: 7.1.1
 Encoding: UTF-8

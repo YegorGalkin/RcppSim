@@ -12,10 +12,6 @@
 #' @examples
 run_simulation<-
   function(simulator, epochs, calculate.pcf=FALSE, pcf_grid){
-  
-    require(dplyr)
-    require(spatstat)
-    require(glue)
     
   time<-numeric(epochs+1)
   pop<-numeric(epochs+1)

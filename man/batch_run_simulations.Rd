@@ -11,7 +11,7 @@ batch_run_simulations(
   dd,
   sw,
   sm = 1,
-  work_dir = getwd(),
+  work_dir = file.path(getwd(), Sys.time()),
   calculate.pcf = FALSE,
   pcf.r = 5 * pmax(sm, sw),
   pcf.nodes = 101,
@@ -20,7 +20,9 @@ batch_run_simulations(
   seed = 12345,
   initial_population = 1000,
   realtime_limit = 3600,
+  epochs = 1000,
   birth_tail_cutoff = 1e-06,
+  death_radius_cutoff = 5 * sw,
   kernel_nodes = 101,
   cell_count_x = 100,
   n_cores = availableCores()
@@ -57,7 +59,11 @@ batch_run_simulations(
 
 \item{realtime_limit}{}
 
+\item{epochs}{}
+
 \item{birth_tail_cutoff}{}
+
+\item{death_radius_cutoff}{}
 
 \item{kernel_nodes}{}
 
@@ -69,5 +75,5 @@ batch_run_simulations(
 
 }
 \description{
-Runs multiple simulations
+Experimental
 }

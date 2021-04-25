@@ -25,6 +25,7 @@
 #' @param death_radius_cutoff 
 #'
 #' @return
+#' @export
 #'
 #' @examples
 batch_run_simulations <- 
@@ -68,7 +69,7 @@ batch_run_simulations <-
       dplyr::mutate(id=row_number())%>%
       dplyr::select(id,everything())
     
-    plan(multiprocess(workers = n_cores))
+    plan(multisession(workers = n_cores))
     
     all_runs = listenv()
     

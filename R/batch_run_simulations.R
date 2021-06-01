@@ -109,7 +109,7 @@ batch_run_simulations <-
             death_r=params_all$death_radius_cutoff[i],
             death_y=dnorm(seq(0,params_all$death_radius_cutoff[i],
                               length.out = params_all$kernel_nodes[i] ), 
-                          sd = params_all$sw[i]),
+                          sd = params_all$sw[i])^params_all$ndim[i],
             birth_ircdf_y=birth_ircdf,
             realtime_limit = params_all$realtime_limit[i],
             ndim = params_all$ndim[i]

@@ -489,7 +489,7 @@ void run_events(int events)
     initial_population_y = Rcpp::as < vector < double >> (params["initial_population_y"]);
     
     death_y = Rcpp::as < vector < double >> (params["death_y"]);
-    death_cutoff_r = Rcpp::as < double > (params["death_kernel_r"]);
+    death_cutoff_r = Rcpp::as < double > (params["death_r"]);
     death_spline_nodes = death_y.size();
     death_step = death_cutoff_r / (death_spline_nodes - 1);
     

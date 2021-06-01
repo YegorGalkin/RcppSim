@@ -12,6 +12,7 @@
 #' @examples
 run_simulation<-
   function(simulator, epochs, calculate.pcf=FALSE, pcf_grid){
+  require(dplyr)
     
   time<-numeric(epochs+1)
   pop<-numeric(epochs+1)
@@ -49,6 +50,7 @@ run_simulation<-
                  'pattern' = pattern)
   
   if (calculate.pcf){
+    require(spatstat)
     if(class(simulator)[1]=='Rcpp_poisson_1d'){
       
       points<-ppp(simulator$get_all_x_coordinates(),

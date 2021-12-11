@@ -15,7 +15,7 @@ simulation <- function(area_length_x = 100,
                 b = 1, d = 0, dd = 0, seed = 1234L, 
                 initial_population_x = c(10),
                 death_r = 1, death_y, birth_ircdf_y, realtime_limit = 1e6, ndim = 1, epochs = 1000, 
-                calculate.pcf = FALSE, pcf_grid) {
+                calculate.pcf = TRUE, pcf_grid) {
   # Stores expression as a future, future gets send to different process
   # Futures eat errors so carefully debug code
   # Different starting populations for example
@@ -51,6 +51,8 @@ dd_l = 0.001
 dd_r = 0.0011
 dd_step = 0.0001
 
+
+start_time <- Sys.time()
 for (b_value in seq(b_l, b_r, b_step)) {
   for (d_value in seq(d_l, d_r, d_step)) {
     for (dd_value in seq(dd_l, dd_r, dd_step)) {
@@ -67,10 +69,16 @@ for (b_value in seq(b_l, b_r, b_step)) {
     }
   }
 }
-
+finish_time <- Sys.time()
+time_taken <- finish_time - start_time
+time_taken
+count_of_simulations = i
+mean_time_per_simulation <- time_taken / count_of_simulations
+mean_time_per_simulation
 
 # Waits for all tasks to finish, converts results to list
 sim_results <- sim_results%>%as.list()
+
 
 sim_results%>%
   purrr::map(~.x[['population']])%>% # Pulls population from every result
@@ -78,7 +86,6 @@ sim_results%>%
   ggplot(aes(x=time,y=pop,color=ID))+
   geom_line()+
   xlim(0,10)                         # Shows different starting positions
-
 
 sim_results%>%
   purrr::map(~.x[['pcf']])%>%
@@ -88,7 +95,6 @@ sim_results%>%
   ggplot(aes(x=r,y=pcf,color=ID))+
   geom_line()
 
-
 # Same for K function
 sim_results%>%
   purrr::map(~.x[['K']])%>%
@@ -97,3 +103,13 @@ sim_results%>%
   #summarise(K_iso=mean(K_iso))%>%
   ggplot(aes(x=r,y=K_iso,color=ID))+
   geom_line()
+
+
+work_dir=file.path(getwd(),'sim')
+for (i in seq(1, count_of_simulations)) {
+  # Exporting to csv
+  write_csv(do.call(rbind.data.frame, sim_results[[i]]['pcf']),
+            file.path(work_dir,"pcf",paste0(i,'.csv')))
+  write_csv(do.call(rbind.data.frame, sim_results[[i]]['initial_parameters']),
+            file.path(work_dir,"initial_parameters",paste0(i,'.csv')))
+}

@@ -27,7 +27,10 @@ simulation <- function(area_length_x = 100,
                                 b = b, d = d, dd = dd, seed = seed, 
                                 initial_population_x = initial_population_x,
                                 death_r = death_r,
-                                death_y = death_y, birth_ircdf_y = birth_ircdf_y, realtime_limit = realtime_limit, ndim = ndim)
+                                death_y = death_y,
+                                birth_ircdf_y = birth_ircdf_y,
+                                realtime_limit = realtime_limit,
+                                ndim = ndim)
     
     res<-run_simulation(sim, epochs = epochs, calculate.pcf = calculate.pcf, pcf_grid = pcf_grid)
     res[['initial_parameters']]<-data.frame(b=b,d=d,dd=dd)
@@ -37,7 +40,9 @@ simulation <- function(area_length_x = 100,
 }
 
 
-i = 0L
+
+our_realtime_limit = 120
+our_epochs_count = 2000
 
 b_l = 1.0
 b_r = 1.1
@@ -51,8 +56,8 @@ dd_l = 0.001
 dd_r = 0.0011
 dd_step = 0.0001
 
-
 start_time <- Sys.time()
+i = 0L
 for (b_value in seq(b_l, b_r, b_step)) {
   for (d_value in seq(d_l, d_r, d_step)) {
     for (dd_value in seq(dd_l, dd_r, dd_step)) {
@@ -64,7 +69,9 @@ for (b_value in seq(b_l, b_r, b_step)) {
           initial_population_x = seq(0, 10, length.out = 100), death_r = 5, 
           death_y = dnorm(seq(0, 5, length.out = 1001), sd = 1), 
           birth_ircdf_y = qnorm(seq(0.5, 1-1e-6, length.out = 101), sd = 0.2), 
-          realtime_limit = 60, calculate.pcf = TRUE, 
+          realtime_limit = our_realtime_limit,
+          epochs = our_epochs_count,
+          calculate.pcf = TRUE, 
           pcf_grid = seq(0,5,length.out = 1001))
     }
   }

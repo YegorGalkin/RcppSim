@@ -45,16 +45,16 @@ our_realtime_limit = 120
 our_epochs_count = 2000
 
 b_l = 1.0
-b_r = 1.1
+b_r = 1.4
 b_step = 0.1
 
 d_l = 0
-d_r = 0.1
+d_r = 0.4
 d_step = 0.1
 
 dd_l = 0.001
-dd_r = 0.0011
-dd_step = 0.0001
+dd_r = 0.041
+dd_step = 0.01
 
 start_time <- Sys.time()
 i = 0L
@@ -119,4 +119,6 @@ for (i in seq(1, count_of_simulations)) {
             file.path(work_dir,"pcf",paste0(i,'.csv')))
   write_csv(do.call(rbind.data.frame, sim_results[[i]]['initial_parameters']),
             file.path(work_dir,"initial_parameters",paste0(i,'.csv')))
+  write_csv(do.call(rbind.data.frame, sim_results[[i]]['population']),
+            file.path(work_dir,"population",paste0(i,'.csv')))
 }

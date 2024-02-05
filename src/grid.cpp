@@ -269,7 +269,7 @@ void Grid<dim>::MakeEvent() {
     for (auto s : ModelParameters.IterSpecies()) {
         if (TotalPopulation[s] > 0) {
             dis[2 * s + 0] = TotalDeathRate[s];
-            dis[2 * s + 1] = TotalPopulation[s] * ModelParameters.GetD(s);
+            dis[2 * s + 1] = TotalPopulation[s] * ModelParameters.GetB(s);
         }
     }
     auto t = boost::random::discrete_distribution<>(dis)(Rnd);

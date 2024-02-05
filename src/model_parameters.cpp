@@ -92,6 +92,10 @@ double ModelParameters::GetD(size_t species) const {
     return D[species];
 }
 
+double ModelParameters::GetB(size_t species) const {
+    return B[species];
+}
+
 const boost::math::cubic_b_spline<double>& ModelParameters::GetBirthSpline(size_t species) const {
     return BirthReverseKernel[species];
 }

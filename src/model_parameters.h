@@ -36,6 +36,7 @@ private:
 public:
     double GetInteraction(size_t speciesA, size_t speciesB, double distance) const;
     double GetD(size_t species) const;
+    double GetB(size_t species) const;
     const boost::math::cubic_b_spline<double>& GetBirthSpline(size_t species) const;
     double GetMaximumCutoff() const;
 }; 

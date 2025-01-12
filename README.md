@@ -6,9 +6,11 @@ This repository contains source code (R/Rcpp) required to run spatial population
 ### Windows
   - Install R ([R Installer](https://cran.r-project.org/bin/windows/base/)) - latest version used is 4.0.5
   - Install Rtools ([Rtools Installer](https://cran.r-project.org/bin/windows/Rtools/))
-  - Install required R packages from CRAN (devtools, Rcpp, BH)
+  - Install required R packages from CRAN (devtools, Rcpp)
+  - Install 1.75.0-0 version of BH package using devtools. Remove BH package if version is 1.78 or higher using remove.packages("BH")
   - Install this source package using devtools
 ```R
+devtools::install_version("BH",version = "1.75.0-0")
 devtools::install_github("YegorGalkin/RcppSim")
 ```
 # Usage

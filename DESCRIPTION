@@ -9,11 +9,11 @@ Description: (none)
 License: GPL (>= 2)
 Imports:
   Rcpp (>= 0.12.17),
-  BH (<= 1.75.0),
+  BH (== 1.75.0-0),
   devtools
 LinkingTo:
   Rcpp,
-  BH,
+  BH (== 1.75.0-0),
   devtools,
   spatstat,
   glue,

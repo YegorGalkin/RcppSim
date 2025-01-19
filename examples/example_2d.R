@@ -21,6 +21,18 @@ sim <- initialize_simulator(
 epochs <- 100
 sim_results <- run_simulation(sim, epochs, calculate.pcf = TRUE)
 
+ggplot(sim_results$pattern, aes(x = x, y = y)) +
+  geom_bin2d(bins = 30) +
+  scale_fill_viridis_c() +
+  labs(x = "X coordinate", y = "Y coordinate", fill = "Count") +
+  coord_fixed(ratio = 1) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "white", color = NA),
+  )
+ggsave("plots/pattern_density_2d.png") # 2d гистограмма численности популяции
+
+
 animation <- enframe(sim_results$frames$x) %>%
   unnest(value) %>%
   rename(x_coordinate = value) %>%
@@ -55,14 +67,5 @@ anim_save(
   fps = epochs / sim$realtime_limit,
   res = 150
 )
-
-# # 2D density plot
-# ggplot(sim_results$pattern, aes(x = x, y = y)) +
-#   geom_bin2d(bins = 30) +
-#   scale_fill_viridis_c() +
-#   labs(x = "X coordinate", y = "Y coordinate", fill = "Count") +
-#   coord_fixed(ratio = 1) +
-#   theme_minimal()
-# ggsave("plots/pattern_density_2d.png")
 
 system2("xdg-open", "plots/population_2d.mp4")

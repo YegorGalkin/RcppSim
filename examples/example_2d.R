@@ -17,7 +17,8 @@ sim <- initialize_simulator(
 )
 
 epochs <- 100
-sim_results <- run_simulation(sim, epochs, calculate.pcf = TRUE)
+collect_frames <- FALSE
+sim_results <- run_simulation(sim, epochs, calculate.pcf = TRUE, collect_frames = collect_frames)
 
 dir.create("plots", showWarnings = FALSE)
 
@@ -32,10 +33,11 @@ ggplot(sim_results$pattern, aes(x = x, y = y)) +
   )
 ggsave("plots/pattern_density_2d.png") # 2d гистограмма численности популяции
 
-
-make_animation(
-  sim_results = sim_results,
-  simulator = sim,
-  epochs = epochs,
-  output_path = "plots/population_2d.mp4"
-)
+if (collect_frames) {
+  make_animation(
+    sim_results = sim_results,
+    simulator = sim,
+    epochs = epochs,
+    output_path = "plots/population_2d.mp4"
+  )
+}

@@ -12,11 +12,6 @@
 run_simulation<-
   function(simulator, epochs, calculate.pcf=FALSE, pcf_grid){
   require(dplyr)
-
-  if (dir.exists("plots")) {
-    unlink("plots", recursive = TRUE) # delete old plots
-  }
-  dir.create("plots", showWarnings = FALSE) # create new plots directory
     
   time<-numeric(epochs+1)
   pop<-numeric(epochs+1)

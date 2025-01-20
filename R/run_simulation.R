@@ -4,12 +4,13 @@
 #' @param epochs amount of population-dependent time units to run
 #' @param calculate.pcf if TRUE, adds pcf estimate to output
 #' @param pcf_grid grid for pcf calculation
+#' @param collect_frames if TRUE, adds frames to output
 #'
 #' @return list with results
 #' @export
 #'
 run_simulation<-
-  function(simulator, epochs, calculate.pcf=FALSE, pcf_grid){
+  function(simulator, epochs, calculate.pcf=FALSE, pcf_grid, collect_frames=FALSE){
 
   library(dplyr)
   library(glue)
@@ -20,19 +21,23 @@ run_simulation<-
     
   time<-numeric(epochs+1)
   pop<-numeric(epochs+1)
-  frames <- list(x = vector("list", epochs + 1),
-                 y = vector("list", epochs + 1),
-                 z = vector("list", epochs + 1))
+  frames <- if(collect_frames) {
+    list(x = vector("list", epochs + 1),
+         y = vector("list", epochs + 1),
+         z = vector("list", epochs + 1))
+  } else NULL
   
   pop[1] = simulator$total_population
   time[1] = simulator$time
 
-  frames$x[[1]] <- simulator$get_all_x_coordinates()
-  if (class(simulator)[1] == "Rcpp_poisson_2d") {
-    frames$y[[1]] <- simulator$get_all_y_coordinates()
-  } else if (class(simulator)[1] == "Rcpp_poisson_3d") {
-    frames$y[[1]] <- simulator$get_all_y_coordinates()
-    frames$z[[1]] <- simulator$get_all_z_coordinates()
+  if(collect_frames) {
+    frames$x[[1]] <- simulator$get_all_x_coordinates()
+    if (class(simulator)[1] == "Rcpp_poisson_2d") {
+      frames$y[[1]] <- simulator$get_all_y_coordinates()
+    } else if (class(simulator)[1] == "Rcpp_poisson_3d") {
+      frames$y[[1]] <- simulator$get_all_y_coordinates()
+      frames$z[[1]] <- simulator$get_all_z_coordinates()
+    }
   }
   
   for(j in 2:(epochs+1)){
@@ -40,12 +45,14 @@ run_simulation<-
     pop[j]=simulator$total_population
     time[j]=simulator$time
 
-    frames$x[[j]] <- simulator$get_all_x_coordinates()
-    if (class(simulator)[1] == "Rcpp_poisson_2d") {
-      frames$y[[j]] <- simulator$get_all_y_coordinates()
-    } else if (class(simulator)[1] == "Rcpp_poisson_3d") {
-      frames$y[[j]] <- simulator$get_all_y_coordinates()
-      frames$z[[j]] <- simulator$get_all_z_coordinates()
+    if(collect_frames) {
+      frames$x[[j]] <- simulator$get_all_x_coordinates()
+      if (class(simulator)[1] == "Rcpp_poisson_2d") {
+        frames$y[[j]] <- simulator$get_all_y_coordinates()
+      } else if (class(simulator)[1] == "Rcpp_poisson_3d") {
+        frames$y[[j]] <- simulator$get_all_y_coordinates()
+        frames$z[[j]] <- simulator$get_all_z_coordinates()
+      }
     }
   }
   
@@ -69,8 +76,11 @@ run_simulation<-
   
   result <- list('realtime_limit_reached' = simulator$realtime_limit_reached,
                  'population' = data.frame(time=time,pop=pop)%>%distinct(),
-                 'pattern' = pattern,
-                 'frames' = frames)
+                 'pattern' = pattern)
+
+  if (collect_frames) {
+    result[["frames"]] <- frames
+  }
   
   if (calculate.pcf){
     require(spatstat)

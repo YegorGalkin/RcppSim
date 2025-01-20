@@ -1,6 +1,7 @@
 library(pacman)
 p_load(tidyverse, spatstat, future, promises, listenv,
        ggplot2, gganimate, ggridges, av)
+library(MathBioSim)
 
 x_grid_birth <- x_grid_death <- seq(0, 5, length.out = 1001)
 

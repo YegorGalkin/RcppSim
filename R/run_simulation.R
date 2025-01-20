@@ -1,30 +1,59 @@
-
 #' Simplified simulator runner
 #'
-#' @param simulator 1-species simulator object (1d, 2d or 3d) 
+#' @param simulator 1-species simulator object (1d, 2d or 3d)
 #' @param epochs amount of population-dependent time units to run
 #' @param calculate.pcf if TRUE, adds pcf estimate to output
 #' @param pcf_grid grid for pcf calculation
+#' @param collect_frames if TRUE, adds frames to output
 #'
 #' @return list with results
 #' @export
 #'
-#' @examples
 run_simulation<-
-  function(simulator, epochs, calculate.pcf=FALSE, pcf_grid){
-  require(dplyr)
+  function(simulator, epochs, calculate.pcf=FALSE, pcf_grid, collect_frames=FALSE){
+
+  library(dplyr)
+  library(glue)
+  library(spatstat.geom)
+  library(spatstat.explore)
+
+  pfc <- NULL
     
   time<-numeric(epochs+1)
   pop<-numeric(epochs+1)
-  realtime_limit_reached<-FALSE
+  frames <- if(collect_frames) {
+    list(x = vector("list", epochs + 1),
+         y = vector("list", epochs + 1),
+         z = vector("list", epochs + 1))
+  } else NULL
   
   pop[1] = simulator$total_population
   time[1] = simulator$time
+
+  if(collect_frames) {
+    frames$x[[1]] <- simulator$get_all_x_coordinates()
+    if (class(simulator)[1] == "Rcpp_poisson_2d") {
+      frames$y[[1]] <- simulator$get_all_y_coordinates()
+    } else if (class(simulator)[1] == "Rcpp_poisson_3d") {
+      frames$y[[1]] <- simulator$get_all_y_coordinates()
+      frames$z[[1]] <- simulator$get_all_z_coordinates()
+    }
+  }
   
   for(j in 2:(epochs+1)){
     simulator$run_events(simulator$total_population)
     pop[j]=simulator$total_population
     time[j]=simulator$time
+
+    if(collect_frames) {
+      frames$x[[j]] <- simulator$get_all_x_coordinates()
+      if (class(simulator)[1] == "Rcpp_poisson_2d") {
+        frames$y[[j]] <- simulator$get_all_y_coordinates()
+      } else if (class(simulator)[1] == "Rcpp_poisson_3d") {
+        frames$y[[j]] <- simulator$get_all_y_coordinates()
+        frames$z[[j]] <- simulator$get_all_z_coordinates()
+      }
+    }
   }
   
   if(simulator$total_population == 0){
@@ -48,6 +77,10 @@ run_simulation<-
   result <- list('realtime_limit_reached' = simulator$realtime_limit_reached,
                  'population' = data.frame(time=time,pop=pop)%>%distinct(),
                  'pattern' = pattern)
+
+  if (collect_frames) {
+    result[["frames"]] <- frames
+  }
   
   if (calculate.pcf){
     require(spatstat)

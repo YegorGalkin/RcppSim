@@ -2,6 +2,7 @@
 
 export(batch_run_simulations)
 export(initialize_simulator)
+export(make_animation)
 export(poisson_1d)
 export(poisson_2d)
 export(poisson_3d)

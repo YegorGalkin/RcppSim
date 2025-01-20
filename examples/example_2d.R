@@ -37,5 +37,5 @@ make_animation(
   sim_results = sim_results,
   simulator = sim,
   epochs = epochs,
-  output_path = "plots/population_1d.mp4"
+  output_path = "plots/population_2d.mp4"
 )

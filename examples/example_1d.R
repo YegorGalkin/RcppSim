@@ -14,7 +14,8 @@ sim <- initialize_simulator(
 )
 
 epochs <- 100
-sim_results <- run_simulation(sim, epochs, calculate.pcf = TRUE)
+collect_frames <- TRUE
+sim_results <- run_simulation(sim, epochs, calculate.pcf = TRUE, collect_frames = collect_frames)
 
 dir.create("plots", showWarnings = FALSE)
 
@@ -35,9 +36,11 @@ ggplot(sim_results$K, aes(x = r, y = K_iso)) +
 ggsave("plots/k_function.png") # функция K
 
 
-make_animation(
-  sim_results = sim_results,
-  simulator = sim,
-  epochs = epochs,
-  output_path = "plots/population_1d.mp4"
-)
+if (collect_frames) {
+  make_animation(
+    sim_results = sim_results,
+    simulator = sim,
+    epochs = epochs,
+    output_path = "plots/population_1d.mp4"
+  )
+}
